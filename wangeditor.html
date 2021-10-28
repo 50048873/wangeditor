@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>富文本编辑器</title>
+    <script src="https://cdn.jsdelivr.net/npm/wangeditor@latest/dist/wangEditor.min.js"></script>
+    <script src="./column-resizer.js"></script>
+    <style>
+        #div1 .w-e-text-container {
+            height: auto!important;
+            min-height: 300px;
+        }
+        #div1 table {
+            table-layout: fixed;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="div1">
+        <p>欢迎使用 <b>wangEditor</b> 富文本编辑器</p>
+    </div>
+    <!-- <button type="button" id="btn1">获取内容</button>
+    <button type="button" id="btn2">设置内容</button> -->
+    <div id="newCon"></div>
+    <script type="text/javascript">
+    window.onload = function() {
+        const initResizable = function() {
+            let resizable = ColumnResizer.default;
+            const tables = document.querySelector('#div1').querySelectorAll("table")
+            tables.forEach(table => {
+                new resizable(table, {
+                    liveDrag: true,
+                    draggingClass: "rangeDrag",
+                    gripInnerHtml: "<div class='rangeGrip'></div>",
+                    minWidth: 8,
+                });
+            })
+        }
+
+        const getPrevHtml = function (newHtml) {
+            const div = document.createElement('div')
+            div.innerHTML = newHtml
+            return div        
+        }
+
+        const syncColumnWidth = function () {
+            const tables = document.querySelector('#div1').querySelectorAll("table")
+            tables.forEach(table => {
+                const tr0 = table.querySelector('tr')
+                console.log(tr0)
+            })
+        }
+
+        const E = window.wangEditor
+        const editor = new E('#div1')
+        editor.config.onchange = function(newHtml) {
+            // console.log("change 之后最新的 html", newHtml);
+
+            // initResizable()
+
+            // const prevHtml = getPrevHtml(newHtml)
+            // console.log(prevHtml)
+
+            // syncColumnWidth()
+
+        };
+        editor.config.onchangeTimeout = 500; // 修改为 500ms
+        editor.create()
+
+        /*const btn1 = document.querySelector('#btn1')
+            const btn2 = document.querySelector('#btn2')
+            const getHtml = function () {
+                const html = editor.txt.html()
+                // console.log(html)
+            }
+            const setHtml = function () {
+                const html = `<p>欢迎使用 <b>wangEditor</b> 富文本编辑器</p><div class="grip-container" style="width: 1882px;"><div class="grip-handle" style="left: 212px; height: 154px;"><div class="rangeGrip"></div><div class="grip-resizable"></div></div><div class="grip-handle" style="left: 437px; height: 154px;"><div class="rangeGrip"></div><div class="grip-resizable"></div></div><div class="grip-handle" style="left: 1178.25px; height: 154px;"><div class="rangeGrip"></div><div class="grip-resizable"></div></div><div class="grip-handle" style="left: 1523.5px; height: 154px;"><div class="rangeGrip"></div><div class="grip-resizable"></div></div><div class="grip-handle grip-lastgrip" style="left: 1882.75px; height: 154px;"></div></div><table border="0" width="100%" cellpadding="0" cellspacing="0" style="
+    table-layout: fixed;
+" id="grip-resizable0" class="grip-padding grip-resizable"><tbody><tr><th style="width: 210px;"><font color="#f9963b">标题</font></th><th style="width: 225.25px;"></th><th style="width: 740.25px;"></th><th style="width: 346.25px;"></th><th style="width: 359.25px;"></th></tr><tr><td style="
+    width: 200px;
+"><font color="#46acc8">内容</font></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>`
+                // console.log(html)
+                editor.txt.html(html)
+
+            }
+            btn1.addEventListener('click', getHtml, false)
+            btn2.addEventListener('click', setHtml, false)*/
+    }
+    </script>
+</body>
+
+</html>
