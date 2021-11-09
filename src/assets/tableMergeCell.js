@@ -3,12 +3,59 @@ class TableMergeCell {
     
     constructor (tableEle) {
         this.tableEle = tableEle
-        this.menuEle = null
         this.tableClassName = 'tableMergeCell'
-        this.selected = 'selected'
+        this.menuEle = null
+        this.menus = [
+            {
+                name: '删除表格',
+                key: 'delTable',
+            },
+            {
+                name: '添加行',
+                key: 'addRow',
+            },
+            {
+                name: '删除行',
+                key: 'delRow',
+            },
+            {
+                name: '添加列',
+                key: 'addCol',
+            },
+            {
+                name: '删除列',
+                key: 'delCol',
+            },
+            {
+                name: '设置表头',
+                key: 'addTh',
+            },
+            {
+                name: '取消表头',
+                key: 'delTh',
+            },
+            {
+                name: '合并单元格',
+                key: 'merge',
+            }, 
+            {
+                name: '取消合并单元格',
+                key: 'unMerge',
+            },
+        ]
+        
+        this.selectedCellClassName = 'selected'
         this.ready = false
         this.cellStart = null
         this.cellEnd = null
+        this.indexStart = {
+            row: -1,
+            col: -1,
+        }
+        this.indexEnd = {
+            row: -1,
+            col: -1,
+        }
         this.init()
     }
 
@@ -25,14 +72,14 @@ class TableMergeCell {
     }
 
     addClass (cell) {
-        if (!cell.className.includes(this.selected)) {
-            cell.classList.add(this.selected)
+        if (!cell.className.includes(this.selectedCellClassName)) {
+            cell.classList.add(this.selectedCellClassName)
         }
     }
 
     removeClass (cell) {
         if (cell) {
-            cell.classList.remove(this.selected)
+            cell.classList.remove(this.selectedCellClassName)
             if (cell.className === '') {
                 cell.removeAttribute('class')
             }
@@ -40,7 +87,7 @@ class TableMergeCell {
             const selected = this.tableEle.querySelectorAll('.selected')
             if (selected.length) {
                 selected.forEach(item => {
-                    item.classList.remove(this.selected)
+                    item.classList.remove(this.selectedCellClassName)
                     if (item.className === '') {
                         item.removeAttribute('class')
                     }
@@ -62,7 +109,6 @@ class TableMergeCell {
             const childLen = children.length
             for (let j = 0; j < childLen; j++) {
                 const cell = children[j]
-                // console.log(cell, ele)
                 if (cell === ele) {
                     index.row = i
                     index.col = j
@@ -118,9 +164,7 @@ class TableMergeCell {
 
     selectedCellsIsValid () {
         const cellStart_rowspan = this.cellStart.getAttribute('rowspan')
-        // const cellStart_colspan = this.cellStart.getAttribute('colspan')
         const cellEnd_rowspan = this.cellEnd && this.cellEnd.getAttribute('rowspan')
-        // const cellEnd_colspan = this.cellEnd && this.cellEnd.getAttribute('colspan')
         if (cellStart_rowspan || cellEnd_rowspan) {
             console.log('不符合合并规则：选中区域不能包含已合并的单元格。')
             return false
@@ -148,33 +192,9 @@ class TableMergeCell {
             } else {
                 ele.style.display = 'none'
             }
-            ele.classList.remove(this.selected)
+            ele.classList.remove(this.selectedCellClassName)
         })
     }
-
-    /*mergeCell2 = () => {
-        const {indexStart, indexEnd} = this
-        const rowspan = indexEnd.row - indexStart.row + 1
-        const colspan = indexEnd.col - indexStart.col + 1
-        if (rowspan > 1 || colspan > 1) {
-            this.cellStart.setAttribute('rowspan', rowspan)
-            this.cellStart.setAttribute('colspan', colspan)
-            const trs = this.tableEle.querySelectorAll('tr')
-            const trLen = trs.length
-            for (let i = 0; i < trLen; i++) {
-                const tr = trs[i]
-                const {children} = tr
-                const childLen = children.length
-                for (let j = 0; j < childLen; j++) {
-                    const cell = children[j]
-                    if (cell && cell !== this.cellStart && cell.className.includes(this.selected)) {
-                        cell.style.display = 'none'
-                    } 
-                }
-            }
-            this.removeClass()
-        }
-    }*/
 
     unMergeCell = () => {
         this.indexStart = this.getCellIndex(this.contextmenuCell)
@@ -191,7 +211,7 @@ class TableMergeCell {
             } else {
                 ele.style.display = 'table-cell'
             }
-            ele.classList.remove(this.selected)
+            ele.classList.remove(this.selectedCellClassName)
         })
     }
 
@@ -248,7 +268,7 @@ class TableMergeCell {
         * 2.是否合并
         * 3.直接右键点击，未选中单元格时的情况
         */
-        if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selected)) && !cell.getAttribute('rowspan')) {
+        if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
             this.btnMerge.style.color = '#eee'
             this.btnMerge.style.pointerEvents = 'none'
             this.btnUnMerge.style.color = '#eee'
@@ -264,7 +284,24 @@ class TableMergeCell {
             this.btnUnMerge.style.color = '#eee'
             this.btnUnMerge.style.pointerEvents = 'none'
         }
-        
+    }
+
+    menuClick = (e) => {
+        const {target} = e
+        const key = target.dataset.key
+        switch (key) {
+            case 'merge':
+                console.log('合并单元格')
+                this.mergeCell()
+                break
+            case 'unMerge':
+                console.log('取消合并单元格')
+                this.unMergeCell()
+                break
+        }
+        if (target.style.pointerEvents) {
+            this.hideMenuEleSelfIsClicked()
+        }
     }
 
     mousedown = (e) => {
@@ -307,23 +344,20 @@ class TableMergeCell {
         if (!this.menuEle) {
             this.menuEle = document.createElement('ul')
             this.menuEle.classList.add('tableMergeCell-contextmenu')
+            this.menuEle.addEventListener('click', this.menuClick, false)
 
-            /*this.menus = ['合并单元格', '取消合并单元格']
             this.menus.forEach(item => {
                 const li = document.createElement('li')
-                li.textContent = item
+                const {name, key} = item
+                li.textContent = name
+                li.dataset.key = key
+                if (key === 'merge') {
+                    this.btnMerge = li
+                } else if (key === 'unMerge') {
+                    this.btnUnMerge = li
+                }
                 this.menuEle.appendChild(li)
-            })*/
-
-            this.btnMerge = document.createElement('li')
-            this.btnMerge.textContent = '合并单元格'
-            this.btnMerge.addEventListener('click', this.btnMergeClick, false)
-            this.menuEle.appendChild(this.btnMerge)
-
-            this.btnUnMerge = document.createElement('li')
-            this.btnUnMerge.textContent = '取消合并单元格'
-            this.btnUnMerge.addEventListener('click', this.btnUnMergeClilk, false)
-            this.menuEle.appendChild(this.btnUnMerge)
+            })
 
             document.body.appendChild(this.menuEle)
         }
@@ -331,9 +365,8 @@ class TableMergeCell {
         this.menuEle.style.display = 'block'
         this.menuEle.style.top = `${clientY}px`
         this.menuEle.style.left = `${clientX}px`
-
-        this.handleMenuBtnsStatus(target)
         this.contextmenuCell = target
+        this.handleMenuBtnsStatus(target)
     }
 
     addEvent () {

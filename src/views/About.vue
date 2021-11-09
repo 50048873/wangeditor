@@ -21,9 +21,12 @@ export default {
   methods: {
     initTableMergeCell () {
         if (!this.$refs.editor) return
-        const tables = this.$refs.editor.querySelectorAll('table')
+        const tables = this.$refs.editor.querySelectorAll('.w-e-text > table')
+        console.log(123, tables)
         tables.forEach(table => {
             this.instance = new TableMergeCell(table)
+            window.tableMergeCell = this.instance
+            console.log(this.instance)
         })
     },
     getHtml () {
