@@ -24,7 +24,7 @@ export default {
   data () {
     return {
         hotSettings: {
-            data: Handsontable.helper.createSpreadsheetData(2, 2),
+            data: Handsontable.helper.createSpreadsheetData(5, 5),
             colHeaders: true,
             // rowHeaders: true,
             height: 'auto',
@@ -70,7 +70,7 @@ export default {
 
                 const container = document.getElementById('example');
                 const hot = new Handsontable(container, {
-                    data: Handsontable.helper.createSpreadsheetData(2, 2),
+                    data: Handsontable.helper.createSpreadsheetData(5, 5),
                     colHeaders: true,
                     height: 'auto',
                     contextMenu: true,

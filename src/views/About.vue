@@ -22,11 +22,8 @@ export default {
     initTableMergeCell () {
         if (!this.$refs.editor) return
         const tables = this.$refs.editor.querySelectorAll('.w-e-text > table')
-        console.log(123, tables)
         tables.forEach(table => {
             this.instance = new TableMergeCell(table)
-            window.tableMergeCell = this.instance
-            console.log(this.instance)
         })
     },
     getHtml () {
@@ -74,5 +71,8 @@ export default {
     .newHtml th, .newHtml td {
         height: 30px;
         border: 1px solid #eee;
+    }
+    .w-e-tooltip {
+        display: none!important;
     }
 </style>

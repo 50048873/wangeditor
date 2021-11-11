@@ -1,6 +1,5 @@
 /* eslint-disable */
 class TableMergeCell {
-    
     constructor (tableEle) {
         this.tableEle = tableEle
         this.tableClassName = 'tableMergeCell'
@@ -56,27 +55,47 @@ class TableMergeCell {
             row: -1,
             col: -1,
         }
+        this.maxRowCount = 0
+        this.maxColCount = 0
+        this.btnDisabledColor = '#ddd'
         this.init()
     }
 
+    // 初始化
     init () {
         if (!this.tableEle || this.tableEle.ELEMENT_NODE !== 1 || this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
+        this.syncMaxRowAndColCount()
         this.addEvent()
     }
 
+    // 同步最大行数和最大列数
+    syncMaxRowAndColCount () {
+        const {rows} = this.tableEle.tBodies[0]
+        if (rows.length) {
+            this.maxRowCount = rows.length
+            this.maxColCount = rows[0].childElementCount
+        } else {
+            this.maxRowCount = 0
+            this.maxColCount = 0
+        }
+    }
+
+    // 移除注册的事件
     destroy () {
         this.removeEvent()
     }
 
+    // 为指定元素添加类名
     addClass (cell) {
         if (!cell.className.includes(this.selectedCellClassName)) {
             cell.classList.add(this.selectedCellClassName)
         }
     }
 
+    // 移除指定或选取元素类名
     removeClass (cell) {
         if (cell) {
             cell.classList.remove(this.selectedCellClassName)
@@ -96,6 +115,7 @@ class TableMergeCell {
         }
     }
 
+    // 获取单元格行列索引
     getCellIndex (ele) {
         const trs = this.tableEle.querySelectorAll('tr')
         const trLen = trs.length
@@ -122,6 +142,7 @@ class TableMergeCell {
         return index
     }
 
+    // 高亮选取的单元格
     highlightSelectedCells () {
         const trs = this.tableEle.querySelectorAll('tr')
         const isValid = this.selectedCellsIsValid(trs)
@@ -143,6 +164,7 @@ class TableMergeCell {
         }
     }
 
+    // 获取选取的单元格
     getSelectedCells () {
         const {indexStart, indexEnd} = this
         let selectedEles = []
@@ -162,11 +184,12 @@ class TableMergeCell {
         return selectedEles
     }
 
+    // 判断选取的单元格是否有效
     selectedCellsIsValid () {
         const cellStart_rowspan = this.cellStart.getAttribute('rowspan')
         const cellEnd_rowspan = this.cellEnd && this.cellEnd.getAttribute('rowspan')
         if (cellStart_rowspan || cellEnd_rowspan) {
-            console.log('不符合合并规则：选中区域不能包含已合并的单元格。')
+            // console.log('不符合合并规则：选中区域不能包含已合并的单元格。')
             return false
         } 
         const selectedEles = this.getSelectedCells()
@@ -174,12 +197,13 @@ class TableMergeCell {
             return ele.style.display === 'none'
         })
         if (isInvalid) {
-            console.log('不符合合并规则：不能有隐藏的单元格。')
+            // console.log('不符合合并规则：不能有隐藏的单元格。')
             return false
         }
         return true
     }
 
+    // 合并单元格
     mergeCell = () => {
         const selectedEles = this.getSelectedCells()
         const {indexStart, indexEnd} = this
@@ -192,10 +216,11 @@ class TableMergeCell {
             } else {
                 ele.style.display = 'none'
             }
-            ele.classList.remove(this.selectedCellClassName)
+            this.removeClass(ele)
         })
     }
 
+    // 取消合并单元格
     unMergeCell = () => {
         this.indexStart = this.getCellIndex(this.contextmenuCell)
         const cellSpanProperty = this.getCellSpanProperty(this.contextmenuCell)
@@ -211,10 +236,11 @@ class TableMergeCell {
             } else {
                 ele.style.display = 'table-cell'
             }
-            ele.classList.remove(this.selectedCellClassName)
+            this.removeClass(ele)
         })
     }
 
+    // 获取结束单元格索引
     getCellIndexEnd (cell) {
         if (this.cellStart === cell) {
             this.indexEnd = this.indexStart
@@ -223,45 +249,23 @@ class TableMergeCell {
         }
     }
 
-    hideMenuEleNoSelfIsClicked = (e) => {
-        const {target} = e
-        if (this.menuEle && !this.menuEle.contains(target)) {
-            this.menuEle.style.display = 'none'
-        }
-    }
-
-    hideMenuEleSelfIsClicked = () => {
-        if (this.menuEle) {
-            this.menuEle.style.display = 'none'
-        }
-    }
-
-    btnMergeClick = () => {
-        this.hideMenuEleSelfIsClicked()
-        this.mergeCell()
-    }
-
-    btnUnMergeClilk = () => {
-        this.hideMenuEleSelfIsClicked()
-        this.unMergeCell()
-    }
-
+    // 获取单元格rowspan, colspan属性值
     getCellSpanProperty (cell) {
-        const rowspan = cell.getAttribute('rowspan')
-        const colspan = cell.getAttribute('colspan')
         return {
-            rowspan,
-            colspan,
+            rowspan: cell.getAttribute('rowspan'),
+            colspan: cell.getAttribute('colspan'),
         }
     }
 
+    // 获取是否是合并过的单元格
     getIsMergedCellBool (cell) {
         const {rowspan, colspan} = this.getCellSpanProperty(cell)
         const maxCount = Math.max(rowspan, colspan)
         return maxCount > 1
     }
 
-    handleMenuBtnsStatus (cell) {
+    // 控制右键菜单合并按钮是否可点击
+    handleMenuBtnMergeStatus (cell) {
         this.isMergedCell = this.getIsMergedCellBool(cell)
         /**
         * 1.开始选中的单元格是否等于最后选中的单元格
@@ -269,27 +273,242 @@ class TableMergeCell {
         * 3.直接右键点击，未选中单元格时的情况
         */
         if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
-            this.btnMerge.style.color = '#eee'
-            this.btnMerge.style.pointerEvents = 'none'
-            this.btnUnMerge.style.color = '#eee'
-            this.btnUnMerge.style.pointerEvents = 'none'
+            this.btn_merge.style.color = this.btnDisabledColor
+            this.btn_merge.style.pointerEvents = 'none'
+            this.btn_unMerge.style.color = this.btnDisabledColor
+            this.btn_unMerge.style.pointerEvents = 'none'
         } else if (this.isMergedCell) {
-            this.btnMerge.style.color = '#eee'
-            this.btnMerge.style.pointerEvents = 'none'
-            this.btnUnMerge.style.color = 'inherit'
-            this.btnUnMerge.style.pointerEvents = 'auto'
+            this.btn_merge.style.color = this.btnDisabledColor
+            this.btn_merge.style.pointerEvents = 'none'
+            this.btn_unMerge.style.color = 'inherit'
+            this.btn_unMerge.style.pointerEvents = 'auto'
         } else {
-            this.btnMerge.style.color = 'inherit'
-            this.btnMerge.style.pointerEvents = 'auto'
-            this.btnUnMerge.style.color = '#eee'
-            this.btnUnMerge.style.pointerEvents = 'none'
+            this.btn_merge.style.color = 'inherit'
+            this.btn_merge.style.pointerEvents = 'auto'
+            this.btn_unMerge.style.color = this.btnDisabledColor
+            this.btn_unMerge.style.pointerEvents = 'none'
         }
     }
 
+    // 控制右键菜单行按钮是否可点击
+    handleMenuBtnRowStatus (target) {
+        if (target.tagName === 'TH') {
+            this.btn_addRow.style.color = this.btnDisabledColor
+        } else {
+            this.btn_addRow.style.color = 'inherit'
+        }
+    }
+
+    // 控制添加的行与关联行的关系
+    handleMergedCellByAddRow (index, newRow) {
+        const tBody = this.tableEle.tBodies[0]
+        const trs = tBody.rows
+        let colsIndex = []
+        for (let i = 0; i < index; i++) {
+            const tr = trs[i]
+            const cells = tr.children
+            const len2 = cells.length
+            for (let j = 0; j < len2; j++) {
+                const cell = cells[j]
+                const rowspan = cell.getAttribute('rowspan') * 1
+                if (rowspan > 1 && i < index && i + rowspan > index) {
+                    colsIndex.push(j)
+                    cell.setAttribute('rowspan', rowspan + 1)
+                }
+            }
+        }
+        const cells = newRow.children
+        colsIndex.forEach(index => {
+            cells[index].style.display = 'none'
+        })
+    }
+
+    // 控制删除的行与关联行的关系
+    handleMergedCellByDelRow (index) {
+        const tBody = this.tableEle.tBodies[0]
+        const trs = tBody.rows
+        for (let i = 0; i < index; i++) {
+            const tr = trs[i]
+            const cells = tr.children
+            const len2 = cells.length
+            for (let j = 0; j < len2; j++) {
+                const cell = cells[j]
+                const rowspan = cell.getAttribute('rowspan') * 1
+                if (rowspan > 1 && i < index && i + rowspan > index) {
+                    cell.setAttribute('rowspan', rowspan - 1)
+                }
+            }
+        }
+    }
+
+    // 控制添加的列与关联列的关系
+    handleMergedCellByAddCol (index) {
+        const tBody = this.tableEle.tBodies[0]
+        const trs = tBody.rows
+        const trLen = trs.length
+        let startRowIndex = 0, endRowIndex = 0
+        for (let i = 0; i < trLen; i++) {
+            const tr = trs[i]
+            const cells = tr.children
+            const cellLen = cells.length
+            for (let j = 0; j < cellLen; j++) {
+                const cell = cells[j]
+                const colspan = cell.getAttribute('colspan') * 1
+                const rowspan = cell.getAttribute('rowspan') * 1
+                if (colspan > 1 && index > j && index < j + colspan) {
+                    cell.setAttribute('colspan', colspan + 1)
+                    startRowIndex = i
+                    endRowIndex = i + rowspan - 1
+                }
+            }
+        }
+        trs.forEach((tr, i) => {
+            if (i >= startRowIndex && i <= endRowIndex) {
+                const cells = tr.children
+                cells[index].style.display = 'none'
+            }
+        })
+    }
+
+    // 删除表格
+    delTable () {
+        this.tableEle.remove()
+    }
+
+    // 上面添加一行
+    addRow (index) {
+        if (index === 0) return
+        const {maxColCount} = this
+        const tBody = this.tableEle.tBodies[0]
+        const newRow = tBody.insertRow(index)
+        for (let i = 0; i < maxColCount; i++) {
+            newRow.insertCell(i)
+        }
+        this.syncMaxRowAndColCount()
+        this.handleMergedCellByAddRow(index, newRow)
+    }
+
+    // 删除行
+    delRow (index) {
+        const tBody = this.tableEle.tBodies[0]
+        const trs = tBody.rows
+        tBody.deleteRow(index)
+        this.syncMaxRowAndColCount()
+        if (!trs.length) {
+            this.delTable()
+        }
+        this.handleMergedCellByDelRow(index)
+    }
+
+    // 添加列
+    addCol (index) {
+        const {maxRowCount} = this
+        const tBody = this.tableEle.tBodies[0]
+        const trs = tBody.rows
+        for (let i = 0; i < maxRowCount; i++) {
+            const tr = trs[i].children
+            const cell = tr[index]
+            const newCell = cell.tagName === 'TH' ? '<th></th>' : '<td></td>'
+            cell.insertAdjacentHTML('beforebegin', newCell)
+        }
+        this.syncMaxRowAndColCount()
+        this.handleMergedCellByAddCol(index)
+    }
+
+    // 删除列
+    delCol (index) {
+        const {maxRowCount} = this
+        const tBody = this.tableEle.tBodies[0]
+        const trs = tBody.rows
+        for (let i = 0; i < maxRowCount; i++) {
+            const tr = trs[i]
+            tr.deleteCell(index)
+        }
+        if (!trs[0].childElementCount) {
+            this.delTable()
+        }
+        this.syncMaxRowAndColCount()
+    }
+
+    // 添加表头
+    addTh () {
+        const firstTr = this.tableEle.querySelector('tr')
+        const {children} = firstTr
+        let tr = document.createElement('tr')
+        if (children[0].tagName === 'TD') {
+            const len = children.length
+            for (let i = 0; i < len; i++) {
+                const cell = children[i]
+                if (this.getIsMergedCellBool(cell)) {
+                    alert('请先取消第一行合并的单元格！')
+                    break
+                }
+                const th = document.createElement('th')
+                th.innerHTML = cell.innerHTML
+                tr.appendChild(th)
+            }
+            if (tr.childElementCount) {
+                firstTr.innerHTML = tr.innerHTML
+            }
+        }
+    }
+
+    // 删除表头
+    delTh () {
+        const firstTr = this.tableEle.querySelector('tr')
+        const {children} = firstTr
+        let tr = document.createElement('tr')
+        if (children[0].tagName === 'TH') {
+            children.forEach(cell => {
+                const td = document.createElement('td')
+                td.innerHTML = cell.innerHTML
+                tr.appendChild(td)
+            })
+            firstTr.innerHTML = tr.innerHTML
+        }
+    }
+
+    // 隐藏右键菜单
+    hideMenuEleSelfIsClicked = () => {
+        if (this.menuEle) {
+            this.menuEle.style.display = 'none'
+        }
+    }
+
+    // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
         const key = target.dataset.key
+        const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
+            case 'delTable':
+                console.log('删除表格')
+                this.delTable()
+                break
+            case 'addRow':
+                console.log('添加行')
+                this.addRow(row)
+                break
+            case 'delRow':
+                console.log('删除行')
+                this.delRow(row)
+                break
+            case 'addCol':
+                console.log('添加列')
+                this.addCol(col)
+                break
+            case 'delCol':
+                console.log('删除列')
+                this.delCol(col)
+                break
+            case 'addTh':
+                console.log('设置表头')
+                this.addTh()
+                break
+            case 'delTh':
+                console.log('取消表头')
+                this.delTh()
+                break
             case 'merge':
                 console.log('合并单元格')
                 this.mergeCell()
@@ -299,7 +518,7 @@ class TableMergeCell {
                 this.unMergeCell()
                 break
         }
-        if (target.style.pointerEvents) {
+        if (target.style.pointerEvents !== 'none') {
             this.hideMenuEleSelfIsClicked()
         }
     }
@@ -325,7 +544,7 @@ class TableMergeCell {
         }
     }
 
-    mouseleave = (e) => {
+    mouseleave = () => {
         this.ready = null
     }
 
@@ -351,11 +570,7 @@ class TableMergeCell {
                 const {name, key} = item
                 li.textContent = name
                 li.dataset.key = key
-                if (key === 'merge') {
-                    this.btnMerge = li
-                } else if (key === 'unMerge') {
-                    this.btnUnMerge = li
-                }
+                this[`btn_${key}`] = li
                 this.menuEle.appendChild(li)
             })
 
@@ -366,7 +581,16 @@ class TableMergeCell {
         this.menuEle.style.top = `${clientY}px`
         this.menuEle.style.left = `${clientX}px`
         this.contextmenuCell = target
-        this.handleMenuBtnsStatus(target)
+        this.handleMenuBtnMergeStatus(target)
+        this.handleMenuBtnRowStatus(target)
+    }
+
+    // 隐藏右键菜单
+    hideMenuEleNoSelfIsClicked = (e) => {
+        const {target} = e
+        if (this.menuEle && !this.menuEle.contains(target)) {
+            this.menuEle.style.display = 'none'
+        }
     }
 
     addEvent () {
@@ -385,8 +609,6 @@ class TableMergeCell {
         this.tableEle.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
         document.removeEventListener('mousedown', this.hideMenuEleNoSelfIsClicked, false)
-        this.btnMerge.removeEventListener('click', this.btnMergeClick, false)
-        this.btnUnMerge.removeEventListener('click', this.btnUnMergeClilk, false)
     }
 }
 
