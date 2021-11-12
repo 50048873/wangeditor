@@ -58,6 +58,8 @@ class TableMergeCell {
         this.maxRowCount = 0
         this.maxColCount = 0
         this.btnDisabledColor = '#ddd'
+        this.contextmenuCell = null
+        this.mergedCellCanBeDel = false
         this.init()
     }
 
@@ -67,8 +69,20 @@ class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
+    }
+
+    // 添加调试坐标
+    addCellLocation () {
+        const {rows} = this.tableEle.tBodies[0]
+        rows.forEach((row, i) => {
+            const cells = row.children
+            cells.forEach((cell, j) => {
+                cell.textContent = i + '-' + j
+            })
+        })
     }
 
     // 同步最大行数和最大列数
@@ -221,9 +235,15 @@ class TableMergeCell {
     }
 
     // 取消合并单元格
-    unMergeCell = () => {
-        this.indexStart = this.getCellIndex(this.contextmenuCell)
-        const cellSpanProperty = this.getCellSpanProperty(this.contextmenuCell)
+    unMergeCell = (cell) => {
+        let cellSpanProperty = null
+        if (cell) {
+            this.indexStart = this.getCellIndex(cell)
+            cellSpanProperty = this.getCellSpanProperty(cell)
+        } else {
+            this.indexStart = this.getCellIndex(this.contextmenuCell)
+            cellSpanProperty = this.getCellSpanProperty(this.contextmenuCell)
+        }
         this.indexEnd = {
             row: cellSpanProperty.rowspan - 1 + this.indexStart.row,
             col: cellSpanProperty.colspan - 1 + this.indexStart.col,
@@ -252,8 +272,8 @@ class TableMergeCell {
     // 获取单元格rowspan, colspan属性值
     getCellSpanProperty (cell) {
         return {
-            rowspan: cell.getAttribute('rowspan'),
-            colspan: cell.getAttribute('colspan'),
+            rowspan: cell.getAttribute('rowspan') * 1,
+            colspan: cell.getAttribute('colspan') * 1,
         }
     }
 
@@ -294,80 +314,88 @@ class TableMergeCell {
     handleMenuBtnRowStatus (target) {
         if (target.tagName === 'TH') {
             this.btn_addRow.style.color = this.btnDisabledColor
+            this.btn_addRow.style.pointerEvents = 'none'
         } else {
             this.btn_addRow.style.color = 'inherit'
+            this.btn_addRow.style.pointerEvents = 'auto'
+        }
+        const {rowspan, colspan} = this.getCellSpanProperty(target)
+        if (!this.mergedCellCanBeDel && (rowspan > 1 || colspan > 1)) {
+            this.btn_delRow.style.color = this.btnDisabledColor
+            this.btn_delRow.style.pointerEvents = 'none'
+            this.btn_delCol.style.color = this.btnDisabledColor
+            this.btn_delCol.style.pointerEvents = 'none'
+        } else {
+            this.btn_delRow.style.color = 'inherit'
+            this.btn_delRow.style.pointerEvents = 'auto'
+            this.btn_delCol.style.color = 'inherit'
+            this.btn_delCol.style.pointerEvents = 'auto'
         }
     }
 
-    // 控制添加的行与关联行的关系
-    handleMergedCellByAddRow (index, newRow) {
-        const tBody = this.tableEle.tBodies[0]
-        const trs = tBody.rows
-        let colsIndex = []
-        for (let i = 0; i < index; i++) {
-            const tr = trs[i]
-            const cells = tr.children
-            const len2 = cells.length
-            for (let j = 0; j < len2; j++) {
-                const cell = cells[j]
-                const rowspan = cell.getAttribute('rowspan') * 1
-                if (rowspan > 1 && i < index && i + rowspan > index) {
-                    colsIndex.push(j)
-                    cell.setAttribute('rowspan', rowspan + 1)
-                }
-            }
-        }
-        const cells = newRow.children
-        colsIndex.forEach(index => {
-            cells[index].style.display = 'none'
-        })
+    // 获取受影响的合并行索引数组
+    getMergedRowIndexArray (startRowIndex, rowspan) {
+        const endRowIndex = startRowIndex + rowspan - 1
+        let rowIndexArray = []
+        do {
+            rowIndexArray.push(startRowIndex)
+            startRowIndex++
+        } while (startRowIndex <= endRowIndex)
+        return rowIndexArray
     }
 
-    // 控制删除的行与关联行的关系
-    handleMergedCellByDelRow (index) {
-        const tBody = this.tableEle.tBodies[0]
-        const trs = tBody.rows
-        for (let i = 0; i < index; i++) {
-            const tr = trs[i]
-            const cells = tr.children
-            const len2 = cells.length
-            for (let j = 0; j < len2; j++) {
-                const cell = cells[j]
-                const rowspan = cell.getAttribute('rowspan') * 1
-                if (rowspan > 1 && i < index && i + rowspan > index) {
-                    cell.setAttribute('rowspan', rowspan - 1)
-                }
-            }
-        }
+    // 获取受影响的合并列索引数组
+    getMergedColIndexArray (startColIndex, colspan) {
+        const endColIndex = startColIndex + colspan - 1
+        let colIndexArray = []
+        do {
+            colIndexArray.push(startColIndex)
+            startColIndex++
+        } while (startColIndex <= endColIndex)
+        return colIndexArray
     }
 
     // 控制添加的列与关联列的关系
     handleMergedCellByAddCol (index) {
-        const tBody = this.tableEle.tBodies[0]
-        const trs = tBody.rows
-        const trLen = trs.length
-        let startRowIndex = 0, endRowIndex = 0
+        const {rows} = this.tableEle.tBodies[0]
+        const trLen = rows.length
+        let mergedRowIndex = []
         for (let i = 0; i < trLen; i++) {
-            const tr = trs[i]
+            const tr = rows[i]
             const cells = tr.children
             const cellLen = cells.length
             for (let j = 0; j < cellLen; j++) {
                 const cell = cells[j]
-                const colspan = cell.getAttribute('colspan') * 1
-                const rowspan = cell.getAttribute('rowspan') * 1
+                const {rowspan, colspan} = this.getCellSpanProperty(cell)
                 if (colspan > 1 && index > j && index < j + colspan) {
                     cell.setAttribute('colspan', colspan + 1)
-                    startRowIndex = i
-                    endRowIndex = i + rowspan - 1
+                    mergedRowIndex = this.getMergedRowIndexArray(i, rowspan)
                 }
             }
         }
-        trs.forEach((tr, i) => {
-            if (i >= startRowIndex && i <= endRowIndex) {
-                const cells = tr.children
-                cells[index].style.display = 'none'
-            }
+        mergedRowIndex.forEach(rowIndex => {
+            const row = rows[rowIndex]
+            const cells = row.children
+            cells[index].style.display = 'none'
         })
+    }
+
+    // 控制删除的列与关联列的关系
+    handleMergedCellByDelCol (index) {
+        const {rows} = this.tableEle.tBodies[0]
+        const trLen = rows.length
+        for (let i = 0; i < trLen; i++) {
+            const row = rows[i]
+            const cells = row.children
+            const cellLen = cells.length
+            for (let j = 0; j < cellLen; j++) {
+                const cell = cells[j]
+                const {colspan} = this.getCellSpanProperty(cell)
+                if (colspan > 1 && index > j && index < j + colspan) {
+                    cell.setAttribute('colspan', colspan - 1)
+                }
+            }
+        }
     }
 
     // 删除表格
@@ -375,58 +403,152 @@ class TableMergeCell {
         this.tableEle.remove()
     }
 
+    // 删除空表格
+    delEmptyTable () {
+        const {rows} = this.tableEle.tBodies[0]
+        if (!rows.length) {
+            this.delTable()
+        }
+    }
+
     // 上面添加一行
     addRow (index) {
-        if (index === 0) return
         const {maxColCount} = this
         const tBody = this.tableEle.tBodies[0]
+        const {rows} = tBody
+        const currentRow = rows[index]
+        const relatedCellsArray = this.getRelatedMergedCellsByAddRow(index)
+        let colIndexArray = []
+        relatedCellsArray.forEach(cell => {
+            const {rowspan, colspan} = this.getCellSpanProperty(cell)
+            const {row, col} = this.getCellIndex(cell)
+            colIndexArray.push(...this.getMergedColIndexArray(col, colspan))
+            cell.setAttribute('rowspan', rowspan + 1)
+        })
         const newRow = tBody.insertRow(index)
         for (let i = 0; i < maxColCount; i++) {
             newRow.insertCell(i)
         }
+        colIndexArray.forEach(index => {
+            newRow.children[index].style.display = 'none'
+        })
         this.syncMaxRowAndColCount()
-        this.handleMergedCellByAddRow(index, newRow)
     }
 
-    // 删除行
-    delRow (index) {
-        const tBody = this.tableEle.tBodies[0]
-        const trs = tBody.rows
-        tBody.deleteRow(index)
-        this.syncMaxRowAndColCount()
-        if (!trs.length) {
-            this.delTable()
-        }
-        this.handleMergedCellByDelRow(index)
+    // 获取相关的合并单元格
+    getRelatedMergedCellsByAddRow (index) {
+        const {rows} = this.tableEle.tBodies[0]
+        let relatedCellsArray = []
+        rows.forEach((row, rowIndex) => {
+            const cells = row.children
+            cells.forEach((cell, cellIndex) => {
+                const {rowspan} = this.getCellSpanProperty(cell)
+                if (rowspan > 1 && this.willAddRowIsInMergedRow(rowIndex, rowspan, index)) {
+                    relatedCellsArray.push(cell)
+                }
+            })
+        })
+        return relatedCellsArray
+    }
+
+    // 将要删除的行是在合并行的范围内
+    willAddRowIsInMergedRow (startRowIndex, rowspan, willAddRowIndex) {
+        return willAddRowIndex > startRowIndex && willAddRowIndex <= startRowIndex + rowspan - 1
     }
 
     // 添加列
     addCol (index) {
         const {maxRowCount} = this
-        const tBody = this.tableEle.tBodies[0]
-        const trs = tBody.rows
+        const {rows} = this.tableEle.tBodies[0]
         for (let i = 0; i < maxRowCount; i++) {
-            const tr = trs[i].children
+            const tr = rows[i].children
             const cell = tr[index]
             const newCell = cell.tagName === 'TH' ? '<th></th>' : '<td></td>'
             cell.insertAdjacentHTML('beforebegin', newCell)
         }
-        this.syncMaxRowAndColCount()
         this.handleMergedCellByAddCol(index)
+        this.syncMaxRowAndColCount()
+    }
+
+    // 删除行
+    delRow (index) {
+        const tBody = this.tableEle.tBodies[0]
+        const {rows} = tBody
+        const currentRow = rows[index]
+        const relatedCellsArray = this.getRelatedMergedCellsByDelRow(index)
+        console.log(relatedCellsArray)
+        relatedCellsArray.forEach(cell => {
+            const {row, col} = this.getCellIndex(cell)
+            if (row === index) {
+                this.delFirstRow(rows, col, cell, index)
+            } else {
+                this.delOtherRow(cell)
+            }
+        })
+        tBody.deleteRow(index)
+        this.delEmptyTable()
+        this.syncMaxRowAndColCount()
+    }
+
+    // 删除非第一行
+    delOtherRow (cell) {
+        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        cell.setAttribute('rowspan', rowspan - 1)
+    }
+
+    // 删除第一行
+    delFirstRow (rows, col, cell, index) {
+        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const nextRow = rows[index + 1]
+        const nextCell = nextRow.children[col]
+        nextCell.setAttribute('rowspan', rowspan - 1)
+        nextCell.setAttribute('colspan', colspan)
+        nextCell.style.display = 'table-cell'
+    }
+
+    // 获取相关的合并单元格
+    getRelatedMergedCellsByDelRow (index) {
+        const {rows} = this.tableEle.tBodies[0]
+        let relatedCellsArray = []
+        rows.forEach((row, rowIndex) => {
+            const cells = row.children
+            cells.forEach((cell, cellIndex) => {
+                const {rowspan} = this.getCellSpanProperty(cell)
+                if (rowspan > 1 && this.willDeletedRowIsInMergedRow(rowIndex, rowspan, index)) {
+                    relatedCellsArray.push(cell)
+                }
+            })
+        })
+        return relatedCellsArray
+    }
+
+    // 将要删除的行是在合并行的范围内
+    willDeletedRowIsInMergedRow (startRowIndex, rowspan, willDeteledRowIndex) {
+        return willDeteledRowIndex >= startRowIndex && willDeteledRowIndex <= startRowIndex + rowspan - 1
     }
 
     // 删除列
     delCol (index) {
         const {maxRowCount} = this
-        const tBody = this.tableEle.tBodies[0]
-        const trs = tBody.rows
-        for (let i = 0; i < maxRowCount; i++) {
-            const tr = trs[i]
-            tr.deleteCell(index)
+        const {rows} = this.tableEle.tBodies[0]
+        const {colspan} = this.getCellSpanProperty(this.contextmenuCell)
+        const mergedRowIndex = this.getMergedRowIndexArray(index, colspan)
+        if (this.mergedCellCanBeDel && mergedRowIndex.length > 1) {
+            console.log(mergedRowIndex)
+            for (let i = 0; i < maxRowCount; i++) {
+                const row = rows[i]
+                mergedRowIndex.forEach(rowIndex => {
+                    row.deleteCell(index)
+                })
+            } 
+        } else {
+            for (let i = 0; i < maxRowCount; i++) {
+                const row = rows[i]
+                row.deleteCell(index)
+            } 
         }
-        if (!trs[0].childElementCount) {
-            this.delTable()
-        }
+        this.handleMergedCellByDelCol(index)
+        this.delEmptyTable()
         this.syncMaxRowAndColCount()
     }
 

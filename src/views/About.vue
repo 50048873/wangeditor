@@ -31,6 +31,7 @@ export default {
         this.$refs.newHtml.innerHTML = this.newHtml
     },
     setHtml () {
+        this.newHtml = `<table border="0" width="100%" cellpadding="0" cellspacing="0" class="tableMergeCell"><tbody><tr><th>0-0</th><th>0-1</th><th>0-2</th><th>0-3</th><th>0-4</th><th>0-5</th><th>0-6</th><th>0-7</th><th>0-8</th><th>0-9</th></tr><tr><td rowspan="3" colspan="2">1-0</td><td style="display: none;">1-1</td><td>1-2</td><td>1-3</td><td>1-4</td><td>1-5</td><td>1-6</td><td>1-7</td><td>1-8</td><td rowspan="3" colspan="1">1-9</td></tr><tr><td style="display: none;">2-0</td><td style="display: none;">2-1</td><td rowspan="3" colspan="2">2-2</td><td style="display: none;">2-3</td><td>2-4</td><td>2-5</td><td>2-6</td><td>2-7</td><td>2-8</td><td style="display: none;">2-9</td></tr><tr><td style="display: none;">3-0</td><td style="display: none;">3-1</td><td style="display: none;">3-2</td><td style="display: none;">3-3</td><td rowspan="3" colspan="2">3-4</td><td style="display: none;">3-5</td><td>3-6</td><td>3-7</td><td>3-8</td><td style="display: none;">3-9</td></tr><tr><td>4-0</td><td>4-1</td><td style="display: none;">4-2</td><td style="display: none;">4-3</td><td style="display: none;">4-4</td><td style="display: none;">4-5</td><td rowspan="3" colspan="2">4-6</td><td style="display: none;">4-7</td><td>4-8</td><td>4-9</td></tr><tr><td rowspan="3" colspan="2">5-0</td><td style="display: none;">5-1</td><td>5-2</td><td>5-3</td><td style="display: none;">5-4</td><td style="display: none;">5-5</td><td style="display: none;">5-6</td><td style="display: none;">5-7</td><td rowspan="3" colspan="2">5-8</td><td style="display: none;">5-9</td></tr><tr><td style="display: none;">6-0</td><td style="display: none;">6-1</td><td>6-2</td><td>6-3</td><td>6-4</td><td>6-5</td><td style="display: none;">6-6</td><td style="display: none;">6-7</td><td style="display: none;">6-8</td><td style="display: none;">6-9</td></tr><tr><td style="display: none;">7-0</td><td style="display: none;">7-1</td><td rowspan="2" colspan="2">7-2</td><td style="display: none;">7-3</td><td>7-4</td><td rowspan="3" colspan="3">7-5</td><td style="display: none;">7-6</td><td style="display: none;">7-7</td><td style="display: none;">7-8</td><td style="display: none;">7-9</td></tr><tr><td>8-0</td><td>8-1</td><td style="display: none;">8-2</td><td style="display: none;">8-3</td><td>8-4</td><td style="display: none;">8-5</td><td style="display: none;">8-6</td><td style="display: none;">8-7</td><td>8-8</td><td>8-9</td></tr><tr><td>9-0</td><td>9-1</td><td>9-2</td><td>9-3</td><td>9-4</td><td style="display: none;">9-5</td><td style="display: none;">9-6</td><td style="display: none;">9-7</td><td>9-8</td><td>9-9</td></tr></tbody></table>`
         this.editor.txt.html(this.newHtml)
     },
     initEditor () {
@@ -74,5 +75,8 @@ export default {
     }
     .w-e-tooltip {
         display: none!important;
+    }
+    .w-e-text-container {
+        height: 330px!important;
     }
 </style>
