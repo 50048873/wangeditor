@@ -381,7 +381,7 @@ class TableMergeCell {
     // 删除空表格
     delEmptyTable () {
         const {rows} = this.tableEle.tBodies[0]
-        if (!rows.length) {
+        if (!rows.length || !rows[0].children.length) {
             this.delTable()
         }
     }
@@ -434,31 +434,6 @@ class TableMergeCell {
         }
     }
 
-    // 获取相关的列合并单元格
-    getRelatedMergedColCells (index, type) {
-        const {rows} = this.tableEle.tBodies[0]
-        let relatedCellsArray = []
-        rows.forEach((row, rowIndex) => {
-            const cells = row.children
-            cells.forEach((cell, cellIndex) => {
-                const {colspan} = this.getCellSpanProperty(cell)
-                if (colspan > 1 && this.colIsInMergedRow(cellIndex, colspan, index, type)) {
-                    relatedCellsArray.push(cell)
-                }
-            })
-        })
-        return relatedCellsArray
-    }
-
-    // 列是在合并单元格范围内
-    colIsInMergedRow (startColIndex, colspan, willColIndex, type) {
-        if (type === 'addCol') {
-            return willColIndex > startColIndex && willColIndex <= startColIndex + colspan - 1
-        } else if (type === 'delCol') {
-            return willColIndex >= startColIndex && willColIndex <= startColIndex + colspan - 1
-        }
-    }
-
     // 左边添加一列
     addCol (index) {
         this.syncMaxRowAndColCount()
@@ -476,10 +451,9 @@ class TableMergeCell {
             const cells = row.children
             cells.forEach((cell, cellIndex) => {
                 const {rowspan, colspan} = this.getCellSpanProperty(cell)
-                if (colspan > 1 && this.colIsInMergedRow(cellIndex, colspan, index, 'addCol')) {
+                if (colspan > 1 && index > cellIndex && index <= cellIndex + colspan - 1) {
                     cell.setAttribute('colspan', colspan + 1)
                     cells[index].style.display = 'none'
-                    console.log(cell)
                     let rowLen = rowspan
                     let currentRowIndex = rowIndex
                     while (rowLen > 1) {
@@ -527,26 +501,53 @@ class TableMergeCell {
         nextCell.style.display = 'table-cell'
     }
 
+    // 获取相关的列合并单元格
+    getRelatedMergedColCells (index) {
+        const {rows} = this.tableEle.tBodies[0]
+        let relatedCellsArray = []
+        rows.forEach((row, rowIndex) => {
+            const cells = row.children
+            cells.forEach((cell, cellIndex) => {
+                const {colspan} = this.getCellSpanProperty(cell)
+                if (colspan > 1 && index >= cellIndex && index <= cellIndex + colspan - 1) {
+                    relatedCellsArray.push(cell)
+                }
+            })
+        })
+        return relatedCellsArray
+    }
+
+    // 删除非第一列
+    delOtherCol (cell) {
+        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        cell.setAttribute('colspan', colspan - 1)
+    }
+
+    // 删除第一列
+    delFirstCol (cell) {
+        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const nextCell = cell.nextElementSibling
+        nextCell.setAttribute('colspan', colspan - 1)
+        nextCell.setAttribute('rowspan', rowspan)
+        nextCell.style.display = 'table-cell'
+    }
+
     // 删除列
     delCol (index) {
-        const {maxRowCount} = this
-        const {rows} = this.tableEle.tBodies[0]
-        const {colspan} = this.getCellSpanProperty(this.contextmenuCell)
-        const mergedRowIndex = this.getMergedRowIndexArray(index, colspan)
-        if (this.mergedCellCanBeDel && mergedRowIndex.length > 1) {
-            for (let i = 0; i < maxRowCount; i++) {
-                const row = rows[i]
-                mergedRowIndex.forEach(rowIndex => {
-                    row.deleteCell(index)
-                })
-            } 
-        } else {
-            for (let i = 0; i < maxRowCount; i++) {
-                const row = rows[i]
-                row.deleteCell(index)
-            } 
-        }
-        this.handleMergedCellByDelCol(index)
+        const tBody = this.tableEle.tBodies[0]
+        const {rows} = tBody
+        const relatedCellsArray = this.getRelatedMergedColCells(index)
+        relatedCellsArray.forEach(cell => {
+            const {row, col} = this.getCellIndex(cell)
+            if (col === index) {
+                this.delFirstCol(cell)
+            } else {
+                this.delOtherCol(cell)
+            }
+        })
+        rows.forEach(row => {
+            row.deleteCell(index)
+        })
         this.delEmptyTable()
         this.syncMaxRowAndColCount()
     }
@@ -568,7 +569,7 @@ class TableMergeCell {
                 th.innerHTML = cell.innerHTML
                 tr.appendChild(th)
             }
-            if (tr.childElementCount) {
+            if (tr.childElementCount === len) {
                 firstTr.innerHTML = tr.innerHTML
             }
         }
