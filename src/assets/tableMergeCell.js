@@ -1,6 +1,13 @@
 /* eslint-disable */
+const defaults = {
+    btnDisabledColor: '#ddd', // 右键菜单禁用时的颜色
+    mergedCellCanBeDel: false, // 合并单元格是否能删除
+    onAddCol: null,             // 添加列完成后回调
+}
+
 class TableMergeCell {
-    constructor (tableEle) {
+    constructor (tableEle, options = {}) {
+        this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
         this.tableClassName = 'tableMergeCell'
         this.menuEle = null
@@ -42,7 +49,6 @@ class TableMergeCell {
                 key: 'unMerge',
             },
         ]
-        
         this.selectedCellClassName = 'selected'
         this.ready = false
         this.cellStart = null
@@ -57,9 +63,7 @@ class TableMergeCell {
         }
         this.maxRowCount = 0
         this.maxColCount = 0
-        this.btnDisabledColor = '#ddd'
         this.contextmenuCell = null
-        this.mergedCellCanBeDel = false
         this.init()
     }
 
@@ -102,7 +106,7 @@ class TableMergeCell {
         this.removeEvent()
     }
 
-    // 为指定元素添加类名
+    // 为指定单元格添加类名
     addClass (cell) {
         if (!cell.className.includes(this.selectedCellClassName)) {
             cell.classList.add(this.selectedCellClassName)
@@ -286,6 +290,7 @@ class TableMergeCell {
 
     // 控制右键菜单合并按钮是否可点击
     handleMenuBtnMergeStatus (cell) {
+        const {btnDisabledColor} = this.opts
         this.isMergedCell = this.getIsMergedCellBool(cell)
         /**
         * 1.开始选中的单元格是否等于最后选中的单元格
@@ -293,37 +298,38 @@ class TableMergeCell {
         * 3.直接右键点击，未选中单元格时的情况
         */
         if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
-            this.btn_merge.style.color = this.btnDisabledColor
+            this.btn_merge.style.color = btnDisabledColor
             this.btn_merge.style.pointerEvents = 'none'
-            this.btn_unMerge.style.color = this.btnDisabledColor
+            this.btn_unMerge.style.color = btnDisabledColor
             this.btn_unMerge.style.pointerEvents = 'none'
         } else if (this.getIsMergedCellBool(cell)) {
-            this.btn_merge.style.color = this.btnDisabledColor
+            this.btn_merge.style.color = btnDisabledColor
             this.btn_merge.style.pointerEvents = 'none'
             this.btn_unMerge.style.color = 'inherit'
             this.btn_unMerge.style.pointerEvents = 'auto'
         } else {
             this.btn_merge.style.color = 'inherit'
             this.btn_merge.style.pointerEvents = 'auto'
-            this.btn_unMerge.style.color = this.btnDisabledColor
+            this.btn_unMerge.style.color = btnDisabledColor
             this.btn_unMerge.style.pointerEvents = 'none'
         }
     }
 
     // 控制右键菜单行按钮是否可点击
     handleMenuBtnRowStatus (target) {
+        const {btnDisabledColor} = this.opts
         if (target.tagName === 'TH') {
-            this.btn_addRow.style.color = this.btnDisabledColor
+            this.btn_addRow.style.color = btnDisabledColor
             this.btn_addRow.style.pointerEvents = 'none'
         } else {
             this.btn_addRow.style.color = 'inherit'
             this.btn_addRow.style.pointerEvents = 'auto'
         }
         const {rowspan, colspan} = this.getCellSpanProperty(target)
-        if (!this.mergedCellCanBeDel && (rowspan > 1 || colspan > 1)) {
-            this.btn_delRow.style.color = this.btnDisabledColor
+        if (!this.opts.mergedCellCanBeDel && (rowspan > 1 || colspan > 1)) {
+            this.btn_delRow.style.color = btnDisabledColor
             this.btn_delRow.style.pointerEvents = 'none'
-            this.btn_delCol.style.color = this.btnDisabledColor
+            this.btn_delCol.style.color = btnDisabledColor
             this.btn_delCol.style.pointerEvents = 'none'
         } else {
             this.btn_delRow.style.color = 'inherit'
@@ -436,6 +442,7 @@ class TableMergeCell {
 
     // 左边添加一列
     addCol (index) {
+        const {onAddCol} = this.opts
         this.syncMaxRowAndColCount()
 
         const {maxRowCount} = this
@@ -465,6 +472,8 @@ class TableMergeCell {
         })
 
         this.syncMaxRowAndColCount()
+
+        onAddCol && onAddCol()
     }
 
     // 删除行
@@ -576,6 +585,13 @@ class TableMergeCell {
     }
 
     // 删除表头
+    /*delTh_backup () {
+        if (!this.tableEle.className.includes('tableMergeCell-noTh')) {
+            this.tableEle.classList.add('tableMergeCell-noTh')
+        }
+    }*/
+
+    // 删除表头
     delTh () {
         const firstTr = this.tableEle.querySelector('tr')
         const {children} = firstTr
@@ -647,7 +663,7 @@ class TableMergeCell {
 
     mousedown = (e) => {
         const {target, button} = e
-        if (button === 0 && target.tagName !== 'TH') {
+        if (button === 0 && target.tagName === 'TD') {
             this.ready = target
             this.cellStart = target
             this.indexStart = this.getCellIndex(target)

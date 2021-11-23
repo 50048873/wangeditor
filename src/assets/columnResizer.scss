@@ -1,0 +1,28 @@
+.tableMergeCell {
+    tbody {
+        tr:first-child {
+            th, td {
+                position: relative;
+            }
+        }
+    }
+    .tableMergeCell-handshank {
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        right: -5px;
+        width: 10px;
+        height: 100%;
+        cursor: col-resize;
+    }
+    .tableMergeCell-handshank-hover {
+        background-color: #8eb0e7;
+    }
+    .tableMergeCell-subline:after {
+        content: '';
+        width: 0;
+        height: 10000px;
+        border-right: 1px dashed #8eb0e7;
+        position: absolute;
+    }
+}
