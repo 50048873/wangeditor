@@ -135,14 +135,13 @@ class TableMergeCell {
 
     // 获取单元格行列索引
     getCellIndex (ele) {
-        const trs = this.tableEle.querySelectorAll('tr')
-        const trLen = trs.length
+        const {rows} = this.tableEle.tBodies[0]
         let index = {
             row: -1,
             col: -1,
         }
-        for (let i = 0; i < trLen; i++) {
-            const tr = trs[i]
+        for (let i = 0; i < this.maxRowCount; i++) {
+            const tr = rows[i]
             const {children} = tr
             const childLen = children.length
             for (let j = 0; j < childLen; j++) {
@@ -162,13 +161,12 @@ class TableMergeCell {
 
     // 高亮选取的单元格
     highlightSelectedCells () {
-        const trs = this.tableEle.querySelectorAll('tr')
-        const isValid = this.selectedCellsIsValid(trs)
+        const {rows} = this.tableEle.tBodies[0]
+        const isValid = this.selectedCellsIsValid(rows)
         if (!isValid) return
-        const trLen = trs.length
         const {indexStart, indexEnd} = this
-        for (let i = 0; i < trLen; i++) {
-            const tr = trs[i]
+        for (let i = 0; i < this.maxRowCount; i++) {
+            const tr = rows[i]
             const {children} = tr
             const childLen = children.length
             for (let j = 0; j < childLen; j++) {
@@ -186,10 +184,9 @@ class TableMergeCell {
     getSelectedCells () {
         const {indexStart, indexEnd} = this
         let selectedEles = []
-        const trs = this.tableEle.querySelectorAll('tr')
-        const trLen = trs.length
-        for (let i = 0; i < trLen; i++) {
-            const tr = trs[i]
+        const {rows} = this.tableEle.tBodies[0]
+        for (let i = 0; i < this.maxRowCount; i++) {
+            const tr = rows[i]
             const {children} = tr
             const childLen = children.length
             for (let j = 0; j < childLen; j++) {
@@ -297,6 +294,7 @@ class TableMergeCell {
         * 2.是否合并
         * 3.直接右键点击，未选中单元格时的情况
         */
+
         if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
             this.btn_merge.style.color = btnDisabledColor
             this.btn_merge.style.pointerEvents = 'none'
@@ -585,13 +583,6 @@ class TableMergeCell {
     }
 
     // 删除表头
-    /*delTh_backup () {
-        if (!this.tableEle.className.includes('tableMergeCell-noTh')) {
-            this.tableEle.classList.add('tableMergeCell-noTh')
-        }
-    }*/
-
-    // 删除表头
     delTh () {
         const firstTr = this.tableEle.querySelector('tr')
         const {children} = firstTr
@@ -663,6 +654,7 @@ class TableMergeCell {
 
     mousedown = (e) => {
         const {target, button} = e
+        if (this.tableIsInTable(target)) return
         if (button === 0 && target.tagName === 'TD') {
             this.ready = target
             this.cellStart = target
@@ -695,9 +687,17 @@ class TableMergeCell {
         }
     }
 
+    tableIsInTable (target) {
+        while (target && target.tagName !== 'TABLE') {
+            target = target.parentNode
+        }
+        return this.tableEle !== target && this.tableEle.contains(target)
+    }
+
     contextmenu = (e) => {
         e.preventDefault()
         const {target} = e
+        if (this.tableIsInTable(target)) return
         if (!this.menuEle) {
             this.menuEle = document.createElement('ul')
             this.menuEle.classList.add('tableMergeCell-contextmenu')

@@ -50,7 +50,6 @@ export default {
 
         this.editor.config.onchange = (newHtml) => {
             // console.log("change 之后最新的 newHtml", newHtml)
-            // this.initTableInteraction()
         };
         this.editor.config.onchangeTimeout = 200; // 修改为 500ms
         this.editor.create()
@@ -84,9 +83,6 @@ export default {
     .newHtml th, .newHtml td {
         height: 30px;
         border: 1px solid #eee;
-    }
-    .w-e-tooltip {
-        display: none!important;
     }
     .w-e-text-container {
         height: 330px!important;
