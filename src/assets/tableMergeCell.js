@@ -394,12 +394,11 @@ class TableMergeCell {
     addRow (index) {
         const {maxColCount} = this
         const tBody = this.tableEle.tBodies[0]
-        const {rows} = tBody
         const relatedCellsArray = this.getRelatedMergedRowCells(index, 'addRow')
         let colIndexArray = []
         relatedCellsArray.forEach(cell => {
             const {rowspan, colspan} = this.getCellSpanProperty(cell)
-            const {row, col} = this.getCellIndex(cell)
+            const {col} = this.getCellIndex(cell)
             colIndexArray.push(...this.getMergedColIndexArray(col, colspan))
             cell.setAttribute('rowspan', rowspan + 1)
         })
@@ -419,7 +418,7 @@ class TableMergeCell {
         let relatedCellsArray = []
         rows.forEach((row, rowIndex) => {
             const cells = row.children
-            cells.forEach((cell, cellIndex) => {
+            cells.forEach(cell => {
                 const {rowspan} = this.getCellSpanProperty(cell)
                 if (rowspan > 1 && this.rowIsInMergedRow(rowIndex, rowspan, index, type)) {
                     relatedCellsArray.push(cell)
@@ -494,7 +493,7 @@ class TableMergeCell {
 
     // 删除非第一行
     delOtherRow (cell) {
-        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const {rowspan} = this.getCellSpanProperty(cell)
         cell.setAttribute('rowspan', rowspan - 1)
     }
 
@@ -512,7 +511,7 @@ class TableMergeCell {
     getRelatedMergedColCells (index) {
         const {rows} = this.tableEle.tBodies[0]
         let relatedCellsArray = []
-        rows.forEach((row, rowIndex) => {
+        rows.forEach(row => {
             const cells = row.children
             cells.forEach((cell, cellIndex) => {
                 const {colspan} = this.getCellSpanProperty(cell)
@@ -526,7 +525,7 @@ class TableMergeCell {
 
     // 删除非第一列
     delOtherCol (cell) {
-        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const {colspan} = this.getCellSpanProperty(cell)
         cell.setAttribute('colspan', colspan - 1)
     }
 
@@ -545,7 +544,7 @@ class TableMergeCell {
         const {rows} = tBody
         const relatedCellsArray = this.getRelatedMergedColCells(index)
         relatedCellsArray.forEach(cell => {
-            const {row, col} = this.getCellIndex(cell)
+            const {col} = this.getCellIndex(cell)
             if (col === index) {
                 this.delFirstCol(cell)
             } else {

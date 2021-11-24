@@ -1,9 +1,9 @@
 <template>
   <div id="app">
     <div id="nav">
-      <router-link to="/">handsontable</router-link> |
-      <router-link to="/about">tableMergeCell</router-link> |
-      <router-link to="/redips">redips</router-link>
+      <router-link to="/">tableMergeCell</router-link>
+      <!-- <router-link to="/about">about</router-link> -->
+      <!-- <router-link to="/redips">redips</router-link> -->
     </div>
     <router-view/>
   </div>

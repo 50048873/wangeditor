@@ -26,6 +26,7 @@ export default class ColumnResizer {
         this.addEvent()
     }
 
+    // 获取列宽默认值
     getColDefaultWidth () {
         const {width} = this.tableEle.getBoundingClientRect()
         const {rows} = this.tableEle.tBodies[0]
@@ -33,11 +34,13 @@ export default class ColumnResizer {
         this.average = width / colCount
     }
 
+    // 重置相关内容
     reset () {
         this.addResizeHandShank()
         this.initResizeMode()
     }
 
+    // 初始化列调整模式
     initResizeMode () {
         const {resizeMode} = this.opts
         if (resizeMode === 'overflow') {
@@ -52,6 +55,7 @@ export default class ColumnResizer {
         }
     }
 
+    // 增加列调整手柄
     addResizeHandShank () {
         const {rows} = this.tableEle.tBodies[0]
         const cells = rows[0].children
@@ -63,11 +67,13 @@ export default class ColumnResizer {
         })
     }
 
+    // 增加辅助线
     addSubline () {
         this.handshank.classList.add(this.subline)
         this.tableEle.style.overflow = 'hidden'
     }
 
+    // 移除辅助线
     removeSubline () {
         this.handshank.classList.remove(this.subline)
         this.tableEle.style.overflow = 'initial'
@@ -100,11 +106,11 @@ export default class ColumnResizer {
     }
 
     mouseup = (e) => {
-        if (this.handshank) {
+        let {handshank} = this
+        if (handshank) {
             const {clientX} = e
-            const {handshank} = this
             const firstRow = this.tableEle.tBodies[0].rows[0]
-            const index = this.handshank.dataset.col
+            const index = handshank.dataset.col
             const currentCol = firstRow.children[index]
             const {width} = currentCol.getBoundingClientRect()
             const calcWidth = width + this.diff
@@ -112,10 +118,10 @@ export default class ColumnResizer {
             const newWidth = Math.max(colMinWidth, calcWidth)
             if (clientX - this.clientX === 0) return
             currentCol.style.width = `${newWidth}px`
-            this.handshank.style.transform = 'none'
-            this.handshank.classList.remove(this.handshankHover)
+            handshank.style.transform = 'none'
+            handshank.classList.remove(this.handshankHover)
             this.removeSubline()
-            this.handshank = null
+            handshank = null
         }
     }    
 
