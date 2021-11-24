@@ -8,6 +8,7 @@ export default class ColumnResizer {
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
+        this.tableEle.columnResizer = Object.assign({}, {reset: this.reset})
         this.handshank = null
         this.handshankCls = 'tableMergeCell-handshank'
         this.subline = 'tableMergeCell-subline'
@@ -35,7 +36,7 @@ export default class ColumnResizer {
     }
 
     // 重置相关内容
-    reset () {
+    reset = () => {
         this.addResizeHandShank()
         this.initResizeMode()
     }
@@ -90,9 +91,7 @@ export default class ColumnResizer {
     }
 
     mousemove = (e) => {
-        if (!this.tableEle.contains(e.target)) {
-            this.handshank = null
-        }
+        
         if (this.handshank) {
             e.preventDefault()
             const {clientX} = e
@@ -106,22 +105,23 @@ export default class ColumnResizer {
     }
 
     mouseup = (e) => {
-        let {handshank} = this
-        if (handshank) {
+        if (this.handshank) {
             const {clientX} = e
             const firstRow = this.tableEle.tBodies[0].rows[0]
-            const index = handshank.dataset.col
+            const index = this.handshank.dataset.col
             const currentCol = firstRow.children[index]
             const {width} = currentCol.getBoundingClientRect()
             const calcWidth = width + this.diff
             const {colMinWidth} = this.opts
             const newWidth = Math.max(colMinWidth, calcWidth)
             if (clientX - this.clientX === 0) return
-            currentCol.style.width = `${newWidth}px`
-            handshank.style.transform = 'none'
-            handshank.classList.remove(this.handshankHover)
+            if (this.tableEle.contains(this.handshank)) {
+                currentCol.style.width = `${newWidth}px`
+            }
+            this.handshank.style.transform = 'none'
+            this.handshank.classList.remove(this.handshankHover)
             this.removeSubline()
-            handshank = null
+            this.handshank = null
         }
     }    
 

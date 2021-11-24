@@ -12,11 +12,10 @@
 import E from 'wangeditor'
 import TableMergeCell from '@/assets/tableMergeCell'
 import '@/assets/tableMergeCell.scss'
-// import ColumnResizer from 'column-resizer'
 import ColumnResizer from '@/assets/columnResizer'
 import '@/assets/columnResizer.scss'
 export default {
-  name: 'home',
+  name: 'about',
   mounted () {
     this.initEditor()
     this.tableObserve()
@@ -28,10 +27,10 @@ export default {
         tables.forEach(table => {
             new TableMergeCell(table, {
                 onAddCol: () => {
-                    this.resizer.reset()
+                    table.columnResizer.reset()
                 },
             })
-            this.resizer = new ColumnResizer(table, {
+            new ColumnResizer(table, {
                 // resizeMode: 'overflow',
             })
         })
