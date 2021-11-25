@@ -13,6 +13,14 @@ class TableMergeCell {
         this.menuEle = null
         this.menus = [
             {
+                name: '设置背景色',
+                key: 'addBackgroundColor',
+            },
+            {
+                name: '删除背景色',
+                key: 'delBackgroundColor',
+            },
+            {
                 name: '删除表格',
                 key: 'delTable',
             },
@@ -76,6 +84,28 @@ class TableMergeCell {
         // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
+    }
+
+    // 设置背景色
+    colorChange = (e) => {
+        const {target} = e
+        const {value} = target
+        this.contextmenuCell.style.backgroundColor = value
+        this.colorPicker.remove()
+    }
+
+    // 显示颜色选择弹窗
+    addBackgroundColor () {
+        this.colorPicker = document.createElement('input')
+        this.colorPicker.setAttribute('type', 'color')
+        this.colorPicker.className = 'tableMergeCell-colorPicker'
+        this.colorPicker.addEventListener('input', this.colorChange, false)
+        this.contextmenuCell.appendChild(this.colorPicker)
+        this.colorPicker.click()
+    }
+
+    delBackgroundColor () {
+        this.contextmenuCell.style.backgroundColor = 'transparent'
     }
 
     // 添加调试坐标
@@ -379,6 +409,17 @@ class TableMergeCell {
 
     // 删除表格
     delTable () {
+        /*this.$confirm({
+            title: '删除确认？',
+            content: '您确认删除表格吗？',
+            zIndex: 10009,
+            onOk () {
+                console.log('ok')
+            },
+            onCancel () {
+                console.log('cancel')
+            },
+        })*/
         this.tableEle.remove()
     }
 
@@ -609,6 +650,14 @@ class TableMergeCell {
         const key = target.dataset.key
         const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
+            case 'addBackgroundColor':
+                console.log('设置背景色')
+                this.addBackgroundColor()
+                break
+            case 'delBackgroundColor':
+                console.log('删除背景色')
+                this.delBackgroundColor()
+                break
             case 'delTable':
                 console.log('删除表格')
                 this.delTable()
@@ -737,6 +786,10 @@ class TableMergeCell {
             selectedEles.forEach(cell => {
                 this.removeClass(cell)
             })
+        }
+        // 移除背景色设置输入框
+        if (this.colorPicker) {
+            this.colorPicker.remove()
         }
     }
 
