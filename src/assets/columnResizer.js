@@ -87,11 +87,12 @@ export default class ColumnResizer {
             this.handshank.classList.add(this.handshankHover)
             this.clientX = clientX
             this.addSubline()
+        } else {
+            this.handshank = null
         }
     }
 
     mousemove = (e) => {
-        
         if (this.handshank) {
             e.preventDefault()
             const {clientX} = e
@@ -100,9 +101,9 @@ export default class ColumnResizer {
         }
     }
 
-    mouseleave = () => {
+    /*mouseleave = () => {
         this.mouseup()
-    }
+    }*/
 
     mouseup = (e) => {
         if (this.handshank) {

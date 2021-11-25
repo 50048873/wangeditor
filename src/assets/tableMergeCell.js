@@ -73,7 +73,7 @@ class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        this.addCellLocation()
+        // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -723,10 +723,18 @@ class TableMergeCell {
     }
 
     // 隐藏右键菜单
-    hideMenuEleNoSelfIsClicked = (e) => {
+    removeSomeNoSelfIsClicked = (e) => {
         const {target} = e
+        // 隐藏右键菜单
         if (this.menuEle && !this.menuEle.contains(target)) {
             this.menuEle.style.display = 'none'
+        }
+        // 移除高亮单元格
+        if (!this.tableEle.contains(target)) {
+            const selectedEles = this.getSelectedCells()
+            selectedEles.forEach(cell => {
+                this.removeClass(cell)
+            })
         }
     }
 
@@ -736,7 +744,7 @@ class TableMergeCell {
         this.tableEle.addEventListener('mouseleave', this.mouseleave, false)
         this.tableEle.addEventListener('mouseup', this.mouseup, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
-        document.addEventListener('mousedown', this.hideMenuEleNoSelfIsClicked, false)
+        window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
     }
 
     removeEvent () {
@@ -745,7 +753,7 @@ class TableMergeCell {
         this.tableEle.removeEventListener('mouseleave', this.mouseleave, false)
         this.tableEle.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
-        document.removeEventListener('mousedown', this.hideMenuEleNoSelfIsClicked, false)
+        window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
     }
 }
 
