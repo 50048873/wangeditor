@@ -665,9 +665,11 @@ class TableMergeCell {
 
     mousemove = (e) => {
         if (this.ready) {
-            e.preventDefault()
             const {target} = e
             this.cellEnd = target
+            if (this.cellStart !== this.cellEnd) {
+                e.preventDefault()
+            }
             this.getCellIndexEnd(target)
             this.highlightSelectedCells()
         }
