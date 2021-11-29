@@ -4,7 +4,7 @@ const defaults = {
     onAddCol: null,             // 添加列完成后回调
 }
 
-class TableMergeCell {
+export default class TableMergeCell {
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
@@ -77,13 +77,36 @@ class TableMergeCell {
 
     // 初始化
     init () {
-        if (!this.tableEle || this.tableEle.ELEMENT_NODE !== 1 || this.tableEle.tagName !== 'TABLE') {
+        if (!this.tableEle && this.tableEle.ELEMENT_NODE !== 1 && this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        // this.addCellLocation()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
+    }
+
+    // 添加调试坐标
+    addCellLocation () {
+        const {rows} = this.tableEle.tBodies[0]
+        rows.forEach((row, i) => {
+            const cells = row.children
+            cells.forEach((cell, j) => {
+                cell.textContent = i + '-' + j
+            })
+        })
+    }
+
+    // 同步最大行数和最大列数
+    syncMaxRowAndColCount () {
+        const {rows} = this.tableEle.tBodies[0]
+        if (rows.length) {
+            this.maxRowCount = rows.length
+            this.maxColCount = rows[0].childElementCount
+        } else {
+            this.maxRowCount = 0
+            this.maxColCount = 0
+        }
     }
 
     // 添加背景色
@@ -125,29 +148,6 @@ class TableMergeCell {
         })
     }
 
-    // 添加调试坐标
-    addCellLocation () {
-        const {rows} = this.tableEle.tBodies[0]
-        rows.forEach((row, i) => {
-            const cells = row.children
-            cells.forEach((cell, j) => {
-                cell.textContent = i + '-' + j
-            })
-        })
-    }
-
-    // 同步最大行数和最大列数
-    syncMaxRowAndColCount () {
-        const {rows} = this.tableEle.tBodies[0]
-        if (rows.length) {
-            this.maxRowCount = rows.length
-            this.maxColCount = rows[0].childElementCount
-        } else {
-            this.maxRowCount = 0
-            this.maxColCount = 0
-        }
-    }
-
     // 移除注册的事件
     destroy () {
         this.removeEvent()
@@ -180,51 +180,12 @@ class TableMergeCell {
         }
     }
 
-    // 获取单元格行列索引
-    getCellIndex (ele) {
-        const {rows} = this.tableEle.tBodies[0]
-        let index = {
-            row: -1,
-            col: -1,
-        }
-        for (let i = 0; i < this.maxRowCount; i++) {
-            const tr = rows[i]
-            const {children} = tr
-            const childLen = children.length
-            for (let j = 0; j < childLen; j++) {
-                const cell = children[j]
-                if (cell === ele) {
-                    index.row = i
-                    index.col = j
-                    break
-                }
-            }
-            if (index.row > 0) {
-                break
-            }
-        }
-        return index
-    }
-
     // 高亮选取的单元格
     highlightSelectedCells () {
-        const {rows} = this.tableEle.tBodies[0]
-        const isValid = this.selectedCellsIsValid(rows)
-        if (!isValid) return
-        const {indexStart, indexEnd} = this
-        for (let i = 0; i < this.maxRowCount; i++) {
-            const tr = rows[i]
-            const {children} = tr
-            const childLen = children.length
-            for (let j = 0; j < childLen; j++) {
-                const cell = children[j]
-                if (i >= indexStart.row && i <= indexEnd.row && j >= indexStart.col && j <= indexEnd.col) {
-                    this.addClass(cell)
-                } else {
-                    this.removeClass(cell)
-                }
-            }
-        }
+        const selectedEles = this.getSelectedCells()
+        selectedEles.forEach(ele => {
+            this.addClass(ele)
+        })
     }
 
     // 获取选取的单元格
@@ -308,13 +269,46 @@ class TableMergeCell {
         })
     }
 
-    // 获取结束单元格索引
-    getCellIndexEnd (cell) {
-        if (this.cellStart === cell) {
-            this.indexEnd = this.indexStart
-        } else {
-            this.indexEnd = this.getCellIndex(cell)
+    // 获取单元格行列索引
+    getCellIndex (ele) {
+        const {tagName} = this.cellStart
+        const {rows} = this.tableEle.tBodies[0]
+        let index = {
+            row: -1,
+            col: -1,
         }
+        if (tagName === 'TH') {
+            const firstTr = rows[0]
+            const {children} = firstTr
+            const childLen = children.length
+            index.row = 0
+            for (let j = 0; j < childLen; j++) {
+                const cell = children[j]
+                if (cell === ele) {
+                    index.col = j
+                    break
+                }
+            }
+        } else if (tagName === 'TD') {
+            for (let i = 0; i < this.maxRowCount; i++) {
+                const tr = rows[i]
+                const {children} = tr
+                const childLen = children.length
+                for (let j = 0; j < childLen; j++) {
+                    const cell = children[j]
+                    if (cell === ele) {
+                        index.row = i
+                        index.col = j
+                        break
+                    }
+                }
+                if (index.row > 0) {
+                    break
+                }
+            }
+        }
+        
+        return index
     }
 
     // 获取单元格rowspan, colspan属性值
@@ -719,8 +713,9 @@ class TableMergeCell {
 
     mousedown = (e) => {
         const {target, button} = e
-        if (this.tableIsInTable(target)) return
-        if (button === 0 && target.tagName === 'TD') {
+        if (this.tableIsInTable(target) || button !== 0) return
+        const {tagName} = target
+        if (tagName === 'TD' || tagName === 'TH') {
             this.ready = target
             this.cellStart = target
             this.indexStart = this.getCellIndex(target)
@@ -733,11 +728,11 @@ class TableMergeCell {
         if (this.ready) {
             const {target} = e
             this.cellEnd = target
+            this.indexEnd = this.getCellIndex(target)
+            this.highlightSelectedCells()
             if (this.cellStart !== this.cellEnd) {
                 e.preventDefault()
             }
-            this.getCellIndexEnd(target)
-            this.highlightSelectedCells()
         }
     }
 
@@ -747,9 +742,9 @@ class TableMergeCell {
 
     mouseup = (e) => {
         const {target, button} = e
-        if (button === 0) {
+        if (button === 0 && this.ready) {
             this.cellEnd = target
-            this.getCellIndexEnd(target)
+            this.indexEnd = this.getCellIndex(target)
             this.ready = null
         }
     }
@@ -829,5 +824,3 @@ class TableMergeCell {
         window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
     }
 }
-
-export default TableMergeCell
