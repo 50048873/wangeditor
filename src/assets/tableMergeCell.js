@@ -1,7 +1,6 @@
 /* eslint-disable */
 const defaults = {
     btnDisabledColor: '#ddd', // 右键菜单禁用时的颜色
-    mergedCellCanBeDel: false, // 合并单元格是否能删除
     onAddCol: null,             // 添加列完成后回调
 }
 
@@ -72,6 +71,7 @@ class TableMergeCell {
         this.maxRowCount = 0
         this.maxColCount = 0
         this.contextmenuCell = null
+        this.selectedEles = []
         this.init()
     }
 
@@ -86,11 +86,18 @@ class TableMergeCell {
         this.addEvent()
     }
 
-    // 设置背景色
+    // 添加背景色
     colorChange = (e) => {
         const {target} = e
         const {value} = target
-        this.contextmenuCell.style.backgroundColor = value
+        if (this.selectedEles.length) {
+            this.selectedEles.forEach(ele => {
+                ele.style.backgroundColor = value
+            })
+        } else if (this.contextmenuCell) {
+            this.contextmenuCell.style.backgroundColor = value
+        }
+        this.colorPicker.removeEventListener('input', this.colorChange)
         this.colorPicker.remove()
     }
 
@@ -100,12 +107,22 @@ class TableMergeCell {
         this.colorPicker.setAttribute('type', 'color')
         this.colorPicker.className = 'tableMergeCell-colorPicker'
         this.colorPicker.addEventListener('input', this.colorChange, false)
-        this.contextmenuCell.appendChild(this.colorPicker)
+        this.selectedEles = this.getSelectedCells()
+        if (this.selectedEles.length) {
+            const selectedLastEle = this.selectedEles[this.selectedEles.length - 1]
+            selectedLastEle.appendChild(this.colorPicker)
+        } else if (this.contextmenuCell) {
+            this.contextmenuCell.appendChild(this.colorPicker)
+        }
         this.colorPicker.click()
     }
 
+    // 删除背景色
     delBackgroundColor () {
-        this.contextmenuCell.style.backgroundColor = 'transparent'
+        this.selectedEles = this.getSelectedCells()
+        this.selectedEles.forEach(ele => {
+            ele.removeAttribute('style')
+        })
     }
 
     // 添加调试坐标
@@ -354,7 +371,7 @@ class TableMergeCell {
             this.btn_addRow.style.pointerEvents = 'auto'
         }
         const {rowspan, colspan} = this.getCellSpanProperty(target)
-        if (!this.opts.mergedCellCanBeDel && (rowspan > 1 || colspan > 1)) {
+        if (rowspan > 1 || colspan > 1) {
             this.btn_delRow.style.color = btnDisabledColor
             this.btn_delRow.style.pointerEvents = 'none'
             this.btn_delCol.style.color = btnDisabledColor
@@ -773,7 +790,7 @@ class TableMergeCell {
         this.handleMenuBtnRowStatus(target)
     }
 
-    // 隐藏右键菜单
+    // 移除一些特征
     removeSomeNoSelfIsClicked = (e) => {
         const {target} = e
         // 隐藏右键菜单
@@ -781,7 +798,8 @@ class TableMergeCell {
             this.menuEle.style.display = 'none'
         }
         // 移除高亮单元格
-        if (!this.tableEle.contains(target)) {
+        const key = target.dataset.key
+        if (!this.tableEle.contains(target) && key !== 'addBackgroundColor') {
             const selectedEles = this.getSelectedCells()
             selectedEles.forEach(cell => {
                 this.removeClass(cell)
