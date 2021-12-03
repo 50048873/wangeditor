@@ -1,7 +1,6 @@
 /* eslint-disable */
 const defaults = {
     colMinWidth: 50, // 列最小宽度
-    resizeMode: 'fit', // fit: 表格宽度不变，overflow: 表格宽度可变
 }
 
 export default class ColumnResizer {
@@ -21,39 +20,38 @@ export default class ColumnResizer {
         if (!this.tableEle || this.tableEle.ELEMENT_NODE !== 1 || this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
-        this.getColDefaultWidth()
+        this.getDefaultWidth()
+        this.setDefaultWidth()
         this.addResizeHandShank()
-        this.initResizeMode()
         this.addEvent()
     }
 
-    // 获取列宽默认值
-    getColDefaultWidth () {
+    // 获取表格与列宽默认值
+    getDefaultWidth () {
         const {width} = this.tableEle.getBoundingClientRect()
         const {rows} = this.tableEle.tBodies[0]
         const colCount = rows[0].childElementCount
         this.average = width / colCount
+        this.tableWidth = width
     }
 
     // 重置相关内容
     reset = () => {
         this.addResizeHandShank()
-        this.initResizeMode()
+        this.setDefaultWidth()
     }
 
-    // 初始化列调整模式
-    initResizeMode () {
-        const {resizeMode} = this.opts
-        if (resizeMode === 'overflow') {
-            const {rows} = this.tableEle.tBodies[0]
-            const firstRowCells = rows[0].children
-            firstRowCells.forEach(cell => {
-                const width = cell.style.width
-                if (!width) {
-                    cell.style.width = `${this.average}px`
-                }
-            })
-        }
+    // 初始化默认宽
+    setDefaultWidth () {
+        this.setTableWidth(this.tableWidth)
+        const {rows} = this.tableEle.tBodies[0]
+        const firstRowCells = rows[0].children
+        firstRowCells.forEach(cell => {
+            const width = cell.style.width
+            if (!width) {
+                cell.style.width = `${this.average}px`
+            }
+        })
     }
 
     // 增加列调整手柄
@@ -71,13 +69,31 @@ export default class ColumnResizer {
     // 增加辅助线
     addSubline () {
         this.handshank.classList.add(this.subline)
-        this.tableEle.style.overflow = 'hidden'
+        // this.tableEle.style.overflow = 'hidden'
     }
 
     // 移除辅助线
     removeSubline () {
         this.handshank.classList.remove(this.subline)
-        this.tableEle.style.overflow = 'initial'
+        // this.tableEle.style.overflow = 'initial'
+    }
+
+    // 设置表格宽
+    setTableWidth (width) {
+        this.tableEle.setAttribute('width', `${width}px`)
+    }
+
+    // 获取列宽和
+    getColsWidth () {
+        const {rows} = this.tableEle.tBodies[0]
+        const cells = rows[0].children
+        const arr = Array.from(cells).map(cell => {
+            return Number.parseFloat(cell.style.width)
+        })
+        const width = arr.reduce((acc, cur) => {
+            return acc + cur
+        })
+        return width
     }
 
     mousedown = (e) => {
@@ -101,9 +117,9 @@ export default class ColumnResizer {
         }
     }
 
-    /*mouseleave = () => {
+    mouseleave = () => {
         this.mouseup()
-    }*/
+    }
 
     mouseup = (e) => {
         if (this.handshank) {
@@ -122,6 +138,8 @@ export default class ColumnResizer {
             this.handshank.style.transform = 'none'
             this.handshank.classList.remove(this.handshankHover)
             this.removeSubline()
+            const colsWidth = this.getColsWidth()
+            this.setTableWidth(colsWidth)
             this.handshank = null
         }
     }    

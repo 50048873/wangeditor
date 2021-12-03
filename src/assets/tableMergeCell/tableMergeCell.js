@@ -12,16 +12,24 @@ export default class TableMergeCell {
         this.menuEle = null
         this.menus = [
             {
+                name: '靠左',
+                key: 'textAlignLeft',
+            },
+            {
+                name: '居中',
+                key: 'textAlignCenter',
+            },
+            {
+                name: '靠右',
+                key: 'textAlignRight',
+            },
+            {
                 name: '设置背景色',
                 key: 'addBackgroundColor',
             },
             {
                 name: '删除背景色',
                 key: 'delBackgroundColor',
-            },
-            {
-                name: '删除表格',
-                key: 'delTable',
             },
             {
                 name: '添加行',
@@ -55,8 +63,12 @@ export default class TableMergeCell {
                 name: '取消合并单元格',
                 key: 'unMerge',
             },
+            {
+                name: '删除表格',
+                key: 'delTable',
+            },
         ]
-        this.selectedCellClassName = 'selected'
+        this.selectedCellClassName = 'tableMergeCell-selected'
         this.ready = false
         this.cellStart = null
         this.cellEnd = null
@@ -71,7 +83,6 @@ export default class TableMergeCell {
         this.maxRowCount = 0
         this.maxColCount = 0
         this.contextmenuCell = null
-        this.selectedEles = []
         this.init()
     }
 
@@ -81,7 +92,7 @@ export default class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        // this.addCellLocation()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -113,44 +124,40 @@ export default class TableMergeCell {
     colorChange = (e) => {
         const {target} = e
         const {value} = target
-        if (this.selectedEles.length) {
-            this.selectedEles.forEach(ele => {
+        const {selectedCells} = this.colorPicker
+        if (selectedCells.length) {
+            selectedCells.forEach(ele => {
                 ele.style.backgroundColor = value
             })
-        } else if (this.contextmenuCell) {
-            this.contextmenuCell.style.backgroundColor = value
         }
-        this.colorPicker.removeEventListener('input', this.colorChange)
-        this.colorPicker.remove()
+        if (this.colorPicker) {
+            this.colorPicker.removeEventListener('input', this.colorChange)
+            this.colorPicker.remove()
+            this.colorPicker = null
+        }
+        this.removeClass()
     }
 
     // 显示颜色选择弹窗
     addBackgroundColor () {
+        const selectedCells = this.getSelectedCells()
+        if (!selectedCells.length) return
         this.colorPicker = document.createElement('input')
         this.colorPicker.setAttribute('type', 'color')
         this.colorPicker.className = 'tableMergeCell-colorPicker'
         this.colorPicker.addEventListener('input', this.colorChange, false)
-        this.selectedEles = this.getSelectedCells()
-        if (this.selectedEles.length) {
-            const selectedLastEle = this.selectedEles[this.selectedEles.length - 1]
-            selectedLastEle.appendChild(this.colorPicker)
-        } else if (this.contextmenuCell) {
-            this.contextmenuCell.appendChild(this.colorPicker)
-        }
+        this.colorPicker.selectedCells = selectedCells
+        const selectedLastEle = selectedCells[selectedCells.length - 1]
+        selectedLastEle.appendChild(this.colorPicker)
         this.colorPicker.click()
     }
 
     // 删除背景色
     delBackgroundColor () {
-        this.selectedEles = this.getSelectedCells()
-        this.selectedEles.forEach(ele => {
-            ele.removeAttribute('style')
+        const selectedCells = this.getSelectedCells()
+        selectedCells.forEach(ele => {
+            ele.style.removeProperty('background-color')
         })
-    }
-
-    // 移除注册的事件
-    destroy () {
-        this.removeEvent()
     }
 
     // 为指定单元格添加类名
@@ -168,9 +175,9 @@ export default class TableMergeCell {
                 cell.removeAttribute('class')
             }
         } else {
-            const selected = this.tableEle.querySelectorAll('.selected')
-            if (selected.length) {
-                selected.forEach(item => {
+            const selectedCells = this.tableEle.querySelectorAll('.tableMergeCell-selected')
+            if (selectedCells.length) {
+                selectedCells.forEach(item => {
                     item.classList.remove(this.selectedCellClassName)
                     if (item.className === '') {
                         item.removeAttribute('class')
@@ -182,8 +189,11 @@ export default class TableMergeCell {
 
     // 高亮选取的单元格
     highlightSelectedCells () {
-        const selectedEles = this.getSelectedCells()
-        selectedEles.forEach(ele => {
+        const {rows} = this.tableEle.tBodies[0]
+        const isValid = this.selectedCellsIsValid(rows)
+        if (!isValid) return
+        const selectedCells = this.getSelectedCells()
+        selectedCells.forEach(ele => {
             this.addClass(ele)
         })
     }
@@ -191,7 +201,7 @@ export default class TableMergeCell {
     // 获取选取的单元格
     getSelectedCells () {
         const {indexStart, indexEnd} = this
-        let selectedEles = []
+        let selectedCells = []
         const {rows} = this.tableEle.tBodies[0]
         for (let i = 0; i < this.maxRowCount; i++) {
             const tr = rows[i]
@@ -200,11 +210,11 @@ export default class TableMergeCell {
             for (let j = 0; j < childLen; j++) {
                 const cell = children[j]
                 if (i >= indexStart.row && i <= indexEnd.row && j >= indexStart.col && j <= indexEnd.col) {
-                    selectedEles.push(cell)
+                    selectedCells.push(cell)
                 } 
             }
         }
-        return selectedEles
+        return selectedCells
     }
 
     // 判断选取的单元格是否有效
@@ -215,8 +225,8 @@ export default class TableMergeCell {
             // console.log('不符合合并规则：选中区域不能包含已合并的单元格。')
             return false
         } 
-        const selectedEles = this.getSelectedCells()
-        const isInvalid = Array.from(selectedEles).some(ele => {
+        const selectedCells = this.getSelectedCells()
+        const isInvalid = Array.from(selectedCells).some(ele => {
             return ele.style.display === 'none' || this.getIsMergedCellBool(ele)
         })
         if (isInvalid) {
@@ -228,11 +238,11 @@ export default class TableMergeCell {
 
     // 合并单元格
     mergeCell = () => {
-        const selectedEles = this.getSelectedCells()
+        const selectedCells = this.getSelectedCells()
         const {indexStart, indexEnd} = this
         const rowspan = indexEnd.row - indexStart.row + 1
         const colspan = indexEnd.col - indexStart.col + 1
-        Array.from(selectedEles).forEach((ele, index) => {
+        Array.from(selectedCells).forEach((ele, index) => {
             if (index === 0) {
                 ele.setAttribute('rowspan', rowspan)
                 ele.setAttribute('colspan', colspan)
@@ -257,8 +267,8 @@ export default class TableMergeCell {
             row: cellSpanProperty.rowspan - 1 + this.indexStart.row,
             col: cellSpanProperty.colspan - 1 + this.indexStart.col,
         }
-        const selectedEles = this.getSelectedCells()
-        Array.from(selectedEles).forEach((ele, index) => {
+        const selectedCells = this.getSelectedCells()
+        Array.from(selectedCells).forEach((ele, index) => {
             if (index === 0) {
                 ele.removeAttribute('rowspan')
                 ele.removeAttribute('colspan')
@@ -271,12 +281,13 @@ export default class TableMergeCell {
 
     // 获取单元格行列索引
     getCellIndex (ele) {
-        const {tagName} = this.cellStart
-        const {rows} = this.tableEle.tBodies[0]
         let index = {
             row: -1,
             col: -1,
         }
+        if (!this.cellStart) return index
+        const {tagName} = this.cellStart
+        const {rows} = this.tableEle.tBodies[0]
         if (tagName === 'TH') {
             const firstTr = rows[0]
             const {children} = firstTr
@@ -375,6 +386,40 @@ export default class TableMergeCell {
             this.btn_delRow.style.pointerEvents = 'auto'
             this.btn_delCol.style.color = 'inherit'
             this.btn_delCol.style.pointerEvents = 'auto'
+        }
+    }
+
+    // 根据类名获取选取的单元格
+    getSelectedCellsByClassName () {
+        return Array.from(this.tableEle.querySelectorAll(`.${this.selectedCellClassName}`))
+    }
+
+    // 当未选取单元格时，控制部分右键菜单项是否可点击
+    handleSomeMenuBtns (target) {
+        const {btnDisabledColor} = this.opts
+        const selectedCells = this.getSelectedCellsByClassName()
+        if (selectedCells.length) {
+            this.btn_textAlignLeft.style.color = 'inherit'
+            this.btn_textAlignLeft.style.pointerEvents = 'auto'
+            this.btn_textAlignCenter.style.color = 'inherit'
+            this.btn_textAlignCenter.style.pointerEvents = 'auto'
+            this.btn_textAlignRight.style.color = 'inherit'
+            this.btn_textAlignRight.style.pointerEvents = 'auto'
+            this.btn_addBackgroundColor.style.color = 'inherit'
+            this.btn_addBackgroundColor.style.pointerEvents = 'auto'
+            this.btn_delBackgroundColor.style.color = 'inherit'
+            this.btn_delBackgroundColor.style.pointerEvents = 'auto'
+        } else {
+            this.btn_addBackgroundColor.style.color = btnDisabledColor
+            this.btn_addBackgroundColor.style.pointerEvents = 'none'
+            this.btn_delBackgroundColor.style.color = btnDisabledColor
+            this.btn_delBackgroundColor.style.pointerEvents = 'none'
+            this.btn_textAlignLeft.style.color = btnDisabledColor
+            this.btn_textAlignLeft.style.pointerEvents = 'none'
+            this.btn_textAlignCenter.style.color = btnDisabledColor
+            this.btn_textAlignCenter.style.pointerEvents = 'none'
+            this.btn_textAlignRight.style.color = btnDisabledColor
+            this.btn_textAlignRight.style.pointerEvents = 'none'
         }
     }
 
@@ -612,7 +657,7 @@ export default class TableMergeCell {
 
     // 添加表头
     addTh () {
-        const firstTr = this.tableEle.querySelector('tr')
+        const firstTr = this.tableEle.tBodies[0].rows[0]
         const {children} = firstTr
         let tr = document.createElement('tr')
         if (children[0].tagName === 'TD') {
@@ -635,7 +680,7 @@ export default class TableMergeCell {
 
     // 删除表头
     delTh () {
-        const firstTr = this.tableEle.querySelector('tr')
+        const firstTr = this.tableEle.tBodies[0].rows[0]
         const {children} = firstTr
         let tr = document.createElement('tr')
         if (children[0].tagName === 'TH') {
@@ -655,12 +700,48 @@ export default class TableMergeCell {
         }
     }
 
+    // 靠左
+    textAlignLeft () {
+        const selectedCells = this.getSelectedCells()
+        selectedCells.forEach(cell => {
+            cell.style.textAlign = 'left'
+        })
+    }
+
+    // 居中
+    textAlignCenter () {
+        const selectedCells = this.getSelectedCells()
+        selectedCells.forEach(cell => {
+            cell.style.textAlign = 'center'
+        })
+    }
+
+    // 靠右
+    textAlignRight () {
+        const selectedCells = this.getSelectedCells()
+        selectedCells.forEach(cell => {
+            cell.style.textAlign = 'right'
+        })
+    }
+
     // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
         const key = target.dataset.key
         const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
+            case 'textAlignLeft':
+                console.log('靠左')
+                this.textAlignLeft()
+                break
+            case 'textAlignCenter':
+                console.log('居中')
+                this.textAlignCenter()
+                break
+            case 'textAlignRight':
+                console.log('靠右')
+                this.textAlignRight()
+                break
             case 'addBackgroundColor':
                 console.log('设置背景色')
                 this.addBackgroundColor()
@@ -716,7 +797,7 @@ export default class TableMergeCell {
         if (this.tableIsInTable(target) || button !== 0) return
         const {tagName} = target
         if (tagName === 'TD' || tagName === 'TH') {
-            this.ready = target
+            this.ready = true
             this.cellStart = target
             this.indexStart = this.getCellIndex(target)
             this.removeClass()
@@ -729,23 +810,32 @@ export default class TableMergeCell {
             const {target} = e
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
+            this.removeClass()
             this.highlightSelectedCells()
+            /*const selObj = window.getSelection()
             if (this.cellStart !== this.cellEnd) {
-                e.preventDefault()
-            }
+                selObj.collapseToEnd()
+            }*/
         }
     }
 
-    mouseleave = () => {
-        this.ready = null
-    }
+    /*mouseleave = () => {
+        this.ready = false
+    }*/
 
     mouseup = (e) => {
         const {target, button} = e
         if (button === 0 && this.ready) {
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
-            this.ready = null
+            this.ready = false
+        }
+    }
+
+    tableClick = (e) => {
+        const {target, button} = e
+        if (button === 0 && target.tagName !== 'INPUT' && this.tableEle.contains(target)) {
+            e.stopPropagation()
         }
     }
 
@@ -783,6 +873,7 @@ export default class TableMergeCell {
         this.contextmenuCell = target
         this.handleMenuBtnMergeStatus(target)
         this.handleMenuBtnRowStatus(target)
+        this.handleSomeMenuBtns(target)
     }
 
     // 移除一些特征
@@ -795,10 +886,11 @@ export default class TableMergeCell {
         // 移除高亮单元格
         const key = target.dataset.key
         if (!this.tableEle.contains(target) && key !== 'addBackgroundColor') {
-            const selectedEles = this.getSelectedCells()
-            selectedEles.forEach(cell => {
+            /*const selectedCells = this.getSelectedCells()
+            selectedCells.forEach(cell => {
                 this.removeClass(cell)
-            })
+            })*/
+            this.removeClass()
         }
         // 移除背景色设置输入框
         if (this.colorPicker) {
@@ -807,19 +899,21 @@ export default class TableMergeCell {
     }
 
     addEvent () {
-        this.tableEle.addEventListener('mousedown', this.mousedown, false)
-        this.tableEle.addEventListener('mousemove', this.mousemove, false)
-        this.tableEle.addEventListener('mouseleave', this.mouseleave, false)
-        this.tableEle.addEventListener('mouseup', this.mouseup, false)
+        window.addEventListener('mousedown', this.mousedown, false)
+        window.addEventListener('mousemove', this.mousemove, false)
+        // window.addEventListener('mouseleave', this.mouseleave, false)
+        window.addEventListener('mouseup', this.mouseup, false)
+        this.tableEle.addEventListener('click', this.tableClick, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
         window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
     }
 
     removeEvent () {
-        this.tableEle.removeEventListener('mousedown', this.mousedown, false)
-        this.tableEle.removeEventListener('mousemove', this.mousemove, false)
-        this.tableEle.removeEventListener('mouseleave', this.mouseleave, false)
-        this.tableEle.removeEventListener('mouseup', this.mouseup, false)
+        window.removeEventListener('mousedown', this.mousedown, false)
+        window.removeEventListener('mousemove', this.mousemove, false)
+        // window.removeEventListener('mouseleave', this.mouseleave, false)
+        window.removeEventListener('mouseup', this.mouseup, false)
+        this.tableEle.removeEventListener('click', this.tableClick, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
         window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
     }
