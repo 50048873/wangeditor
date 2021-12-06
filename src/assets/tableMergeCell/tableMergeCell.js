@@ -94,7 +94,7 @@ export default class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        this.addCellLocation()
+        // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
