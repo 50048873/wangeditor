@@ -8,6 +8,8 @@ export default class TableMergeCell {
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
+        this.tBody = tableEle.tBodies[0]
+        this.rows = this.tBody.rows
         this.tableClassName = 'tableMergeCell'
         this.menuEle = null
         this.menus = [
@@ -99,7 +101,7 @@ export default class TableMergeCell {
 
     // 添加调试坐标
     addCellLocation () {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         rows.forEach((row, i) => {
             const cells = row.children
             cells.forEach((cell, j) => {
@@ -110,7 +112,7 @@ export default class TableMergeCell {
 
     // 同步最大行数和最大列数
     syncMaxRowAndColCount () {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         if (rows.length) {
             this.maxRowCount = rows.length
             this.maxColCount = rows[0].childElementCount
@@ -189,7 +191,7 @@ export default class TableMergeCell {
 
     // 高亮选取的单元格
     highlightSelectedCells () {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         const isValid = this.selectedCellsIsValid(rows)
         if (!isValid) return
         const selectedCells = this.getSelectedCells()
@@ -202,7 +204,7 @@ export default class TableMergeCell {
     getSelectedCells () {
         const {indexStart, indexEnd} = this
         let selectedCells = []
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         for (let i = 0; i < this.maxRowCount; i++) {
             const tr = rows[i]
             const {children} = tr
@@ -287,7 +289,7 @@ export default class TableMergeCell {
         }
         if (!this.cellStart) return index
         const {tagName} = this.cellStart
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         if (tagName === 'TH') {
             const firstTr = rows[0]
             const {children} = firstTr
@@ -447,7 +449,7 @@ export default class TableMergeCell {
 
     // 控制删除的列与关联列的关系
     handleMergedCellByDelCol (index) {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         const trLen = rows.length
         for (let i = 0; i < trLen; i++) {
             const row = rows[i]
@@ -481,7 +483,7 @@ export default class TableMergeCell {
 
     // 删除空表格
     delEmptyTable () {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         if (!rows.length || !rows[0].children.length) {
             this.delTable()
         }
@@ -489,8 +491,7 @@ export default class TableMergeCell {
 
     // 上面添加一行
     addRow (index) {
-        const {maxColCount} = this
-        const tBody = this.tableEle.tBodies[0]
+        const {maxColCount, tBody} = this
         const relatedCellsArray = this.getRelatedMergedRowCells(index, 'addRow')
         let colIndexArray = []
         relatedCellsArray.forEach(cell => {
@@ -511,7 +512,7 @@ export default class TableMergeCell {
 
     // 获取相关的行合并单元格
     getRelatedMergedRowCells (index, type) {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         let relatedCellsArray = []
         rows.forEach((row, rowIndex) => {
             const cells = row.children
@@ -540,7 +541,7 @@ export default class TableMergeCell {
         this.syncMaxRowAndColCount()
 
         const {maxRowCount} = this
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         for (let i = 0; i < maxRowCount; i++) {
             const row = rows[i]
             const cell = row.children[index]
@@ -572,8 +573,7 @@ export default class TableMergeCell {
 
     // 删除行
     delRow (index) {
-        const tBody = this.tableEle.tBodies[0]
-        const {rows} = tBody
+        const {tBody, rows} = this
         const relatedCellsArray = this.getRelatedMergedRowCells(index, 'delRow')
         relatedCellsArray.forEach(cell => {
             const {row, col} = this.getCellIndex(cell)
@@ -606,7 +606,7 @@ export default class TableMergeCell {
 
     // 获取相关的列合并单元格
     getRelatedMergedColCells (index) {
-        const {rows} = this.tableEle.tBodies[0]
+        const {rows} = this
         let relatedCellsArray = []
         rows.forEach(row => {
             const cells = row.children
@@ -637,8 +637,7 @@ export default class TableMergeCell {
 
     // 删除列
     delCol (index) {
-        const tBody = this.tableEle.tBodies[0]
-        const {rows} = tBody
+        const {tBody, rows} = this
         const relatedCellsArray = this.getRelatedMergedColCells(index)
         relatedCellsArray.forEach(cell => {
             const {col} = this.getCellIndex(cell)
@@ -657,7 +656,7 @@ export default class TableMergeCell {
 
     // 添加表头
     addTh () {
-        const firstTr = this.tableEle.tBodies[0].rows[0]
+        const firstTr = this.rows[0]
         const {children} = firstTr
         let tr = document.createElement('tr')
         if (children[0].tagName === 'TD') {
@@ -680,7 +679,7 @@ export default class TableMergeCell {
 
     // 删除表头
     delTh () {
-        const firstTr = this.tableEle.tBodies[0].rows[0]
+        const firstTr = this.rows[0]
         const {children} = firstTr
         let tr = document.createElement('tr')
         if (children[0].tagName === 'TH') {
