@@ -26,6 +26,10 @@ export default class ColumnResizer {
         this.addEvent()
     }
 
+    destroy () {
+        this.removeEvent()
+    }
+
     // 获取表格与列宽默认值
     getDefaultWidth () {
         const {width} = this.tableEle.getBoundingClientRect()

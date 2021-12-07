@@ -13,6 +13,14 @@ export default class TableMergeCell {
         this.tableClassName = 'tableMergeCell'
         this.menuEle = null
         this.menus = [
+            /*{
+                name: '复制',
+                key: 'doCopy',
+            },
+            {
+                name: '粘贴',
+                key: 'doPaste',
+            },*/
             {
                 name: '靠左',
                 key: 'textAlignLeft',
@@ -94,9 +102,24 @@ export default class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        // this.addCellLocation()
+        this.addFocusEle()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
+    }
+
+    destroy () {
+        this.removeEvent()
+        this.focusEle && this.focusEle.remove()
+    }
+
+    // 创建焦点元素
+    addFocusEle () {
+        if (!this.focusEle) {
+            this.focusEle = document.createElement('button')
+            this.focusEle.className = 'tableMergeCell-focusEle'
+            document.body.appendChild(this.focusEle)
+        }
     }
 
     // 添加调试坐标
@@ -160,6 +183,14 @@ export default class TableMergeCell {
         selectedCells.forEach(ele => {
             ele.style.removeProperty('background-color')
         })
+    }
+
+    // 表中表
+    tableIsInTable (target) {
+        while (target && target.tagName !== 'TABLE') {
+            target = target.parentNode
+        }
+        return this.tableEle !== target && this.tableEle.contains(target)
     }
 
     // 为指定单元格添加类名
@@ -339,90 +370,9 @@ export default class TableMergeCell {
         return maxCount > 1
     }
 
-    // 控制右键菜单合并按钮是否可点击
-    handleMenuBtnMergeStatus (cell) {
-        const {btnDisabledColor} = this.opts
-        this.isMergedCell = this.getIsMergedCellBool(cell)
-        /**
-        * 1.开始选中的单元格是否等于最后选中的单元格
-        * 2.是否合并
-        * 3.直接右键点击，未选中单元格时的情况
-        */
-
-        if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
-            this.btn_merge.style.color = btnDisabledColor
-            this.btn_merge.style.pointerEvents = 'none'
-            this.btn_unMerge.style.color = btnDisabledColor
-            this.btn_unMerge.style.pointerEvents = 'none'
-        } else if (this.getIsMergedCellBool(cell)) {
-            this.btn_merge.style.color = btnDisabledColor
-            this.btn_merge.style.pointerEvents = 'none'
-            this.btn_unMerge.style.color = 'inherit'
-            this.btn_unMerge.style.pointerEvents = 'auto'
-        } else {
-            this.btn_merge.style.color = 'inherit'
-            this.btn_merge.style.pointerEvents = 'auto'
-            this.btn_unMerge.style.color = btnDisabledColor
-            this.btn_unMerge.style.pointerEvents = 'none'
-        }
-    }
-
-    // 控制右键菜单行按钮是否可点击
-    handleMenuBtnRowStatus (target) {
-        const {btnDisabledColor} = this.opts
-        if (target.tagName === 'TH') {
-            this.btn_addRow.style.color = btnDisabledColor
-            this.btn_addRow.style.pointerEvents = 'none'
-        } else {
-            this.btn_addRow.style.color = 'inherit'
-            this.btn_addRow.style.pointerEvents = 'auto'
-        }
-        const {rowspan, colspan} = this.getCellSpanProperty(target)
-        if (rowspan > 1 || colspan > 1) {
-            this.btn_delRow.style.color = btnDisabledColor
-            this.btn_delRow.style.pointerEvents = 'none'
-            this.btn_delCol.style.color = btnDisabledColor
-            this.btn_delCol.style.pointerEvents = 'none'
-        } else {
-            this.btn_delRow.style.color = 'inherit'
-            this.btn_delRow.style.pointerEvents = 'auto'
-            this.btn_delCol.style.color = 'inherit'
-            this.btn_delCol.style.pointerEvents = 'auto'
-        }
-    }
-
     // 根据类名获取选取的单元格
     getSelectedCellsByClassName () {
         return Array.from(this.tableEle.querySelectorAll(`.${this.selectedCellClassName}`))
-    }
-
-    // 当未选取单元格时，控制部分右键菜单项是否可点击
-    handleSomeMenuBtns (target) {
-        const {btnDisabledColor} = this.opts
-        const selectedCells = this.getSelectedCellsByClassName()
-        if (selectedCells.length) {
-            this.btn_textAlignLeft.style.color = 'inherit'
-            this.btn_textAlignLeft.style.pointerEvents = 'auto'
-            this.btn_textAlignCenter.style.color = 'inherit'
-            this.btn_textAlignCenter.style.pointerEvents = 'auto'
-            this.btn_textAlignRight.style.color = 'inherit'
-            this.btn_textAlignRight.style.pointerEvents = 'auto'
-            this.btn_addBackgroundColor.style.color = 'inherit'
-            this.btn_addBackgroundColor.style.pointerEvents = 'auto'
-            this.btn_delBackgroundColor.style.color = 'inherit'
-            this.btn_delBackgroundColor.style.pointerEvents = 'auto'
-        } else {
-            this.btn_addBackgroundColor.style.color = btnDisabledColor
-            this.btn_addBackgroundColor.style.pointerEvents = 'none'
-            this.btn_delBackgroundColor.style.color = btnDisabledColor
-            this.btn_delBackgroundColor.style.pointerEvents = 'none'
-            this.btn_textAlignLeft.style.color = btnDisabledColor
-            this.btn_textAlignLeft.style.pointerEvents = 'none'
-            this.btn_textAlignCenter.style.color = btnDisabledColor
-            this.btn_textAlignCenter.style.pointerEvents = 'none'
-            this.btn_textAlignRight.style.color = btnDisabledColor
-            this.btn_textAlignRight.style.pointerEvents = 'none'
-        }
     }
 
     // 获取受影响的合并行索引数组
@@ -445,6 +395,65 @@ export default class TableMergeCell {
             startColIndex++
         } while (startColIndex <= endColIndex)
         return colIndexArray
+    }
+
+    // 控制右键菜单合并按钮是否可点击
+    handleMenuBtnMergeStatus (cell) {
+        const {btnDisabledColor} = this.opts
+        this.isMergedCell = this.getIsMergedCellBool(cell)
+        /**
+        * 1.开始选中的单元格是否等于最后选中的单元格
+        * 2.是否合并
+        * 3.直接右键点击，未选中单元格时的情况
+        */
+
+        if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
+            this.btn_merge.style.color = btnDisabledColor
+            this.btn_unMerge.style.color = btnDisabledColor
+        } else if (this.getIsMergedCellBool(cell)) {
+            this.btn_merge.style.color = btnDisabledColor
+            this.btn_unMerge.style.removeProperty('color')
+        } else {
+            this.btn_merge.style.removeProperty('color')
+            this.btn_unMerge.style.color = btnDisabledColor
+        }
+    }
+
+    // 控制右键菜单行按钮是否可点击
+    handleMenuBtnRowStatus (target) {
+        const {btnDisabledColor} = this.opts
+        if (target.tagName === 'TH') {
+            this.btn_addRow.style.color = btnDisabledColor
+        } else {
+            this.btn_addRow.style.removeProperty('color')
+        }
+        const {rowspan, colspan} = this.getCellSpanProperty(target)
+        if (rowspan > 1 || colspan > 1) {
+            this.btn_delRow.style.color = btnDisabledColor
+            this.btn_delCol.style.color = btnDisabledColor
+        } else {
+            this.btn_delRow.style.removeProperty('color')
+            this.btn_delCol.style.removeProperty('color')
+        }
+    }
+
+    // 当未选取单元格时，控制部分右键菜单项是否可点击
+    handleSomeMenuBtns (target) {
+        const {btnDisabledColor} = this.opts
+        const selectedCells = this.getSelectedCellsByClassName()
+        if (selectedCells.length) {
+            this.btn_textAlignLeft.style.removeProperty('color')
+            this.btn_textAlignCenter.style.removeProperty('color')
+            this.btn_textAlignRight.style.removeProperty('color')
+            this.btn_addBackgroundColor.style.removeProperty('color')
+            this.btn_delBackgroundColor.style.removeProperty('color')
+        } else {
+            this.btn_addBackgroundColor.style.color = btnDisabledColor
+            this.btn_delBackgroundColor.style.color = btnDisabledColor
+            this.btn_textAlignLeft.style.color = btnDisabledColor
+            this.btn_textAlignCenter.style.color = btnDisabledColor
+            this.btn_textAlignRight.style.color = btnDisabledColor
+        }
     }
 
     // 控制删除的列与关联列的关系
@@ -692,13 +701,6 @@ export default class TableMergeCell {
         }
     }
 
-    // 隐藏右键菜单
-    hideMenuEleSelfIsClicked = () => {
-        if (this.menuEle) {
-            this.menuEle.style.display = 'none'
-        }
-    }
-
     // 靠左
     textAlignLeft () {
         const selectedCells = this.getSelectedCells()
@@ -726,9 +728,20 @@ export default class TableMergeCell {
     // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
+        const color1 = window.getComputedStyle(target).color
+        const color2 = TableMergeCell.colorToRgb(this.opts.btnDisabledColor)
+        if (color1 === color2) return
         const key = target.dataset.key
         const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
+            /*case 'doCopy':
+                console.log('复制')
+                this.doCopy()
+                break
+            case 'doPaste':
+                console.log('复制')
+                this.doPaste()
+                break*/
             case 'textAlignLeft':
                 console.log('靠左')
                 this.textAlignLeft()
@@ -786,8 +799,8 @@ export default class TableMergeCell {
                 this.unMergeCell()
                 break
         }
-        if (target.style.pointerEvents !== 'none') {
-            this.hideMenuEleSelfIsClicked()
+        if (this.menuEle) {
+            this.menuEle.style.display = 'none'
         }
     }
 
@@ -804,6 +817,24 @@ export default class TableMergeCell {
         }
     }
 
+    // 移除一些特征
+    removeSomeNoSelfIsClicked = (e) => {
+        const {target} = e
+        // 隐藏右键菜单
+        if (this.menuEle && !this.menuEle.contains(target)) {
+            this.menuEle.style.display = 'none'
+        }
+        // 未点击表格时（且未点击右键菜单的添加背景色）移除高亮单元格
+        const key = target.dataset.key
+        if (!this.tableEle.contains(target) && key !== 'addBackgroundColor') {
+            this.removeClass()
+        }
+        // 移除背景色设置输入框
+        if (this.colorPicker) {
+            this.colorPicker.remove()
+        }
+    }
+
     mousemove = (e) => {
         if (this.ready) {
             const {target} = e
@@ -811,16 +842,12 @@ export default class TableMergeCell {
             this.indexEnd = this.getCellIndex(target)
             this.removeClass()
             this.highlightSelectedCells()
-            /*const selObj = window.getSelection()
+            const selObj = window.getSelection()
             if (this.cellStart !== this.cellEnd) {
                 selObj.collapseToEnd()
-            }*/
+            }
         }
     }
-
-    /*mouseleave = () => {
-        this.ready = false
-    }*/
 
     mouseup = (e) => {
         const {target, button} = e
@@ -828,6 +855,9 @@ export default class TableMergeCell {
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
             this.ready = false
+            if (this.cellStart !== this.cellEnd) {
+                this.focusEle && this.focusEle.focus()
+            }
         }
     }
 
@@ -836,13 +866,6 @@ export default class TableMergeCell {
         if (button === 0 && target.tagName !== 'INPUT' && this.tableEle.contains(target)) {
             e.stopPropagation()
         }
-    }
-
-    tableIsInTable (target) {
-        while (target && target.tagName !== 'TABLE') {
-            target = target.parentNode
-        }
-        return this.tableEle !== target && this.tableEle.contains(target)
     }
 
     contextmenu = (e) => {
@@ -875,45 +898,86 @@ export default class TableMergeCell {
         this.handleSomeMenuBtns(target)
     }
 
-    // 移除一些特征
-    removeSomeNoSelfIsClicked = (e) => {
-        const {target} = e
-        // 隐藏右键菜单
-        if (this.menuEle && !this.menuEle.contains(target)) {
-            this.menuEle.style.display = 'none'
+    copy = (e) => {
+        e.preventDefault()
+        const selectedCells = this.getSelectedCells()
+        let arr = []
+        selectedCells.forEach(cell => {
+            arr.push(cell.outerHTML)
+        })
+        const res = arr.join(',,')
+        console.log('copy', res)
+        if (event.clipboardData) {
+            event.clipboardData.setData('text/plain', res)
+        } else if (window.clipboardData) {
+            window.clipboardData.setData('text', res)
         }
-        // 移除高亮单元格
-        const key = target.dataset.key
-        if (!this.tableEle.contains(target) && key !== 'addBackgroundColor') {
-            /*const selectedCells = this.getSelectedCells()
-            selectedCells.forEach(cell => {
-                this.removeClass(cell)
-            })*/
-            this.removeClass()
+    }
+
+    pasteWithRule (targetCells, resourceCells) {
+        const lenT = targetCells.length
+        const lenR = resourceCells.length
+        if (lenT !== lenR) return
+        for (let i = 0; i < lenT; i++) {
+            const cellT = targetCells[i]
+            const cellR = resourceCells[i]
+            const spans = this.getCellSpanProperty(cellT)
+            const rowspanT = spans.rowspan
+            const colspanT = spans.colspan
+            const m1 = cellR.match(/rowspan="(\d+)"/)
+            const m2 = cellR.match(/colspan="(\d+)"/)
+            let rowspanR = 0, colspanR = 0
+            if (m1 && m1[1]) {
+                rowspanR = m1[1] * 1
+            }
+            if (m2 && m2[1]) {
+                colspanR = m2[1] * 1
+            }
+            console.log(rowspanT, rowspanR, colspanT, colspanR)
+            if (rowspanT === rowspanR && colspanT === colspanR) {
+                cellT.outerHTML = cellR
+            }
         }
-        // 移除背景色设置输入框
-        if (this.colorPicker) {
-            this.colorPicker.remove()
-        }
+    }
+
+    paste = (e) => {
+        e.preventDefault()
+        const clipboardData = event.clipboardData || window.clipboardData
+        const data = clipboardData.getData('text')
+        console.log('paste', data)
+        const arr = data.split(',,')
+        const selectedCells = this.getSelectedCells()
+        this.pasteWithRule(selectedCells, arr)
     }
 
     addEvent () {
         window.addEventListener('mousedown', this.mousedown, false)
+        window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
         window.addEventListener('mousemove', this.mousemove, false)
-        // window.addEventListener('mouseleave', this.mouseleave, false)
         window.addEventListener('mouseup', this.mouseup, false)
         this.tableEle.addEventListener('click', this.tableClick, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
-        window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
+        document.addEventListener('copy', this.copy, false)
+        document.addEventListener('paste', this.paste, false)
     }
 
     removeEvent () {
         window.removeEventListener('mousedown', this.mousedown, false)
+        window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
         window.removeEventListener('mousemove', this.mousemove, false)
-        // window.removeEventListener('mouseleave', this.mouseleave, false)
         window.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('click', this.tableClick, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
-        window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
+        this.tableEle.removeEventListener('copy', this.copy, false)
+        this.tableEle.removeEventListener('paste', this.paste, false)
+    }
+
+    static colorToRgb (color) {
+        var span = document.createElement('span')
+        span.style.color = color
+        document.body.appendChild(span)
+        var c = window.getComputedStyle(span).color
+        document.body.removeChild(span)
+        return c
     }
 }

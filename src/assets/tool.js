@@ -44,8 +44,8 @@ export const wangEditorTableExtend = {
     },
     beforeDestroy () {
       this.tables && this.tables.forEach(table => {
-          table.tableMergeCellInstance.removeEvent()
-          table.tableColumnResizerInstance.removeEvent()
+          table.tableMergeCellInstance.destroy()
+          table.tableColumnResizerInstance.destroy()
       })
       this.tables = null
     },
