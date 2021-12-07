@@ -103,7 +103,7 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.addFocusEle()
-        this.addCellLocation()
+        // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -725,6 +725,30 @@ export default class TableMergeCell {
         })
     }
 
+    // 右击拷贝
+    /*doCopy () {
+        // const evt = document.createEvent('UIEvents')
+        // evt.initEvent('copy', true, true)
+        // document.dispatchEvent(evt)
+
+        const evt = new Event('ClipboardEvent')
+        evt.initEvent('copy', true, true)
+        document.dispatchEvent(evt)
+        console.log(evt)
+    }*/
+
+    // 右击粘贴
+    /*doPaste () {
+        // const evt = document.createEvent('UIEvents')
+        // evt.initEvent('paste', true, true)
+        // document.dispatchEvent(evt)
+
+        const evt = new Event('ClipboardEvent')
+        evt.initEvent('paste', true, true)
+        document.dispatchEvent(evt)
+        console.log(evt)
+    }*/
+
     // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
@@ -739,7 +763,7 @@ export default class TableMergeCell {
                 this.doCopy()
                 break
             case 'doPaste':
-                console.log('复制')
+                console.log('粘贴')
                 this.doPaste()
                 break*/
             case 'textAlignLeft':
@@ -842,9 +866,9 @@ export default class TableMergeCell {
             this.indexEnd = this.getCellIndex(target)
             this.removeClass()
             this.highlightSelectedCells()
-            const selObj = window.getSelection()
+            const selection = window.getSelection()
             if (this.cellStart !== this.cellEnd) {
-                selObj.collapseToEnd()
+                selection.collapseToEnd()
             }
         }
     }
@@ -899,18 +923,23 @@ export default class TableMergeCell {
     }
 
     copy = (e) => {
-        e.preventDefault()
-        const selectedCells = this.getSelectedCells()
-        let arr = []
-        selectedCells.forEach(cell => {
-            arr.push(cell.outerHTML)
-        })
-        const res = arr.join(',,')
-        console.log('copy', res)
-        if (event.clipboardData) {
-            event.clipboardData.setData('text/plain', res)
-        } else if (window.clipboardData) {
-            window.clipboardData.setData('text', res)
+        const selection = window.getSelection()
+        const selectionStr = selection.toString()
+        if (selectionStr) {
+            this.copyedContent = selectionStr
+        } else {
+            e.preventDefault()
+            const selectedCells = this.getSelectedCells()
+            let arr = []
+            selectedCells.forEach(cell => {
+                arr.push(cell.outerHTML)
+            })
+            this.copyedContent = arr.join(',,')
+            if (e.clipboardData) {
+                e.clipboardData.setData('text/plain', this.copyedContent)
+            } else if (window.clipboardData) {
+                window.clipboardData.setData('text', this.copyedContent)
+            }
         }
     }
 
@@ -933,7 +962,6 @@ export default class TableMergeCell {
             if (m2 && m2[1]) {
                 colspanR = m2[1] * 1
             }
-            console.log(rowspanT, rowspanR, colspanT, colspanR)
             if (rowspanT === rowspanR && colspanT === colspanR) {
                 cellT.outerHTML = cellR
             }
@@ -941,13 +969,14 @@ export default class TableMergeCell {
     }
 
     paste = (e) => {
-        e.preventDefault()
-        const clipboardData = event.clipboardData || window.clipboardData
-        const data = clipboardData.getData('text')
-        console.log('paste', data)
-        const arr = data.split(',,')
-        const selectedCells = this.getSelectedCells()
-        this.pasteWithRule(selectedCells, arr)
+        if (/<.+>/.test(this.copyedContent)) {
+            e.preventDefault()
+            const clipboardData = e.clipboardData || window.clipboardData
+            const data = clipboardData.getData('text')
+            const arr = data.split(',,')
+            const selectedCells = this.getSelectedCells()
+            this.pasteWithRule(selectedCells, arr)
+        }
     }
 
     addEvent () {
@@ -957,8 +986,8 @@ export default class TableMergeCell {
         window.addEventListener('mouseup', this.mouseup, false)
         this.tableEle.addEventListener('click', this.tableClick, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
-        document.addEventListener('copy', this.copy, false)
-        document.addEventListener('paste', this.paste, false)
+        window.addEventListener('copy', this.copy, false)
+        window.addEventListener('paste', this.paste, false)
     }
 
     removeEvent () {
@@ -968,8 +997,8 @@ export default class TableMergeCell {
         window.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('click', this.tableClick, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
-        this.tableEle.removeEventListener('copy', this.copy, false)
-        this.tableEle.removeEventListener('paste', this.paste, false)
+        window.removeEventListener('copy', this.copy, false)
+        window.removeEventListener('paste', this.paste, false)
     }
 
     static colorToRgb (color) {
