@@ -5,6 +5,21 @@ const defaults = {
 }
 
 export default class TableMergeCell {
+    static separator = ',%,#,$'
+
+    static focusEle = null
+
+    static copyedContent = ''
+
+    static colorToRgb (color) {
+        var span = document.createElement('span')
+        span.style.color = color
+        document.body.appendChild(span)
+        var c = window.getComputedStyle(span).color
+        document.body.removeChild(span)
+        return c
+    }
+
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
@@ -103,22 +118,26 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.addFocusEle()
-        // this.addCellLocation()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
 
     destroy () {
         this.removeEvent()
-        this.focusEle && this.focusEle.remove()
+        if (this.menuEle) {
+            this.menuEle.removeEventListener('click', this.menuClick, false)
+            this.menuEle.remove()
+        }
+        TableMergeCell.focusEle && TableMergeCell.focusEle.remove()
     }
 
     // 创建焦点元素
     addFocusEle () {
-        if (!this.focusEle) {
-            this.focusEle = document.createElement('button')
-            this.focusEle.className = 'tableMergeCell-focusEle'
-            document.body.appendChild(this.focusEle)
+        if (!TableMergeCell.focusEle) {
+            TableMergeCell.focusEle = document.createElement('button')
+            TableMergeCell.focusEle.className = 'tableMergeCell-focusEle'
+            document.body.appendChild(TableMergeCell.focusEle)
         }
     }
 
@@ -880,7 +899,7 @@ export default class TableMergeCell {
             this.indexEnd = this.getCellIndex(target)
             this.ready = false
             if (this.cellStart !== this.cellEnd) {
-                this.focusEle && this.focusEle.focus()
+                TableMergeCell.focusEle && TableMergeCell.focusEle.focus()
             }
         }
     }
@@ -894,7 +913,7 @@ export default class TableMergeCell {
 
     contextmenu = (e) => {
         e.preventDefault()
-        const {target} = e
+        const {target, clientX, clientY} = e
         if (this.tableIsInTable(target)) return
         if (!this.menuEle) {
             this.menuEle = document.createElement('ul')
@@ -911,11 +930,29 @@ export default class TableMergeCell {
             })
 
             document.body.appendChild(this.menuEle)
+            const {width, height} = this.menuEle.getBoundingClientRect()
+            this.menuEle.dataset.width = width
+            this.menuEle.dataset.height = height
         }
-        const {clientX, clientY} = e
-        this.menuEle.style.display = 'block'
+        
+        const {clientWidth, clientHeight} = document.documentElement
+        const {width, height} = this.menuEle.dataset
+        const diffX = clientWidth - clientX
+        const diffY = clientHeight - clientY
+        if (diffX < width) {
+            this.menuEle.style.right = '10px'
+            this.menuEle.style.removeProperty('left')
+        } else {
+            this.menuEle.style.left = `${clientX}px`
+            this.menuEle.style.removeProperty('right')
+        }
+        if (diffY < height) {
+            this.menuEle.style.height = `${diffY - 10}px`
+        } else {
+            this.menuEle.style.removeProperty('height')
+        }
         this.menuEle.style.top = `${clientY}px`
-        this.menuEle.style.left = `${clientX}px`
+        this.menuEle.style.display = 'block'
         this.contextmenuCell = target
         this.handleMenuBtnMergeStatus(target)
         this.handleMenuBtnRowStatus(target)
@@ -923,24 +960,25 @@ export default class TableMergeCell {
     }
 
     copy = (e) => {
-        const selection = window.getSelection()
-        const selectionStr = selection.toString()
+        const selectionStr = window.getSelection().toString()
         if (selectionStr) {
-            this.copyedContent = selectionStr
+            TableMergeCell.copyedContent = selectionStr
         } else {
             e.preventDefault()
             const selectedCells = this.getSelectedCells()
+            if (!selectedCells.length) return
             let arr = []
             selectedCells.forEach(cell => {
                 arr.push(cell.outerHTML)
             })
-            this.copyedContent = arr.join(',,')
+            TableMergeCell.copyedContent = arr.join(TableMergeCell.separator)
             if (e.clipboardData) {
-                e.clipboardData.setData('text/plain', this.copyedContent)
+                e.clipboardData.setData('text/plain', TableMergeCell.copyedContent)
             } else if (window.clipboardData) {
-                window.clipboardData.setData('text', this.copyedContent)
+                window.clipboardData.setData('text', TableMergeCell.copyedContent)
             }
         }
+        // console.log(TableMergeCell.copyedContent)
     }
 
     pasteWithRule (targetCells, resourceCells) {
@@ -969,13 +1007,16 @@ export default class TableMergeCell {
     }
 
     paste = (e) => {
-        if (/<.+>/.test(this.copyedContent)) {
+        const selectedCells = this.getSelectedCells()
+        if (!selectedCells.length) return
+        // console.log('paste')
+        if (/<.+>/.test(TableMergeCell.copyedContent)) {
             e.preventDefault()
             const clipboardData = e.clipboardData || window.clipboardData
             const data = clipboardData.getData('text')
-            const arr = data.split(',,')
-            const selectedCells = this.getSelectedCells()
+            const arr = data.split(TableMergeCell.separator)
             this.pasteWithRule(selectedCells, arr)
+            // console.log(selectedCells, arr)
         }
     }
 
@@ -999,14 +1040,5 @@ export default class TableMergeCell {
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
         window.removeEventListener('copy', this.copy, false)
         window.removeEventListener('paste', this.paste, false)
-    }
-
-    static colorToRgb (color) {
-        var span = document.createElement('span')
-        span.style.color = color
-        document.body.appendChild(span)
-        var c = window.getComputedStyle(span).color
-        document.body.removeChild(span)
-        return c
     }
 }

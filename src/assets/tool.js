@@ -1,52 +1,72 @@
+/* eslint-disable */
 import TableMergeCell from '@/assets/tableMergeCell/tableMergeCell'
 import '@/assets/tableMergeCell/tableMergeCell.less'
 import ColumnResizer from '@/assets/columnResizer/columnResizer'
 import '@/assets/columnResizer/columnResizer.less'
 
 export const wangEditorTableExtend = {
-    mounted () {
+    mounted() {
         this.$nextTick(() => {
-            this.tableObserve()
+            this.addInsertTableIconlistener()
+        })
+    },
+    updated() {
+        this.$nextTick(() => {
+            this.initTableInteraction()
         })
     },
     methods: {
-        initTableInteraction () {
-            if (!this.$refs.editor) return
-            this.tables = this.$refs.editor.querySelectorAll('.w-e-text > table')
+        initTableInteraction() {
+            if (!this.$refs.editor) {
+                throw new Error('请为wangEditor富文本容器元素提供ref="editor"属性')
+            }
+            const tableIsInTable = (target) => {
+                while (target && target.parentNode && target.parentNode.tagName !== 'TABLE') {
+                    target = target.parentNode
+                }
+                return target.parentNode
+            }
+            this.tables = this.$refs.editor.querySelectorAll('.w-e-text table')
             this.tables.forEach(table => {
-                table.tableMergeCellInstance = new TableMergeCell(table, {
-                    onAddCol: () => {
-                        table.columnResizer.reset()
-                    },
-                })
-                table.tableColumnResizerInstance = new ColumnResizer(table, {
-                    // resizeMode: 'overflow',
-                })
-            })
-        },
-        tableObserve () {
-            const callback = (mutationsList) => {
-                for (const mutation of mutationsList) {
-                    const {target, addedNodes} = mutation
-                    const [addedNode] = addedNodes
-                    if (target.className.includes('w-e-text') && addedNode && addedNode.tagName === 'TABLE') {
-                        this.initTableInteraction()
+                if (!tableIsInTable(table)) {
+                    if (!table.tableMergeCellInstance) {
+                        table.tableMergeCellInstance = new TableMergeCell(table, {
+                            onAddCol: () => {
+                                table.columnResizer.reset()
+                            },
+                        })
+                    }
+                    if (!table.tableColumnResizerInstance) {
+                        table.tableColumnResizerInstance = new ColumnResizer(table)
                     }
                 }
-            }
-            const observer = new MutationObserver(callback)
-            const ele = this.$refs.editor.querySelector('.w-e-text[contenteditable="true"]')
-            observer.observe(ele, {
-                childList: true,
-                subtree: true,
             })
         },
+        addInsertTextListener() {
+            this.insertText = this.iconTable.querySelector('button.right')
+            this.insertText && this.insertText.addEventListener('click', this.initTableInteraction, false)
+        },
+        addInsertTableIconlistener() {
+            this.iconTable = this.$refs.editor.querySelector("[data-title='表格']")
+            this.iconTable && this.iconTable.addEventListener('click', this.addInsertTextListener, false)
+        },
     },
-    beforeDestroy () {
-      this.tables && this.tables.forEach(table => {
-          table.tableMergeCellInstance.destroy()
-          table.tableColumnResizerInstance.destroy()
-      })
-      this.tables = null
+    beforeDestroy() {
+        this.tables && this.tables.forEach(table => {
+            if (table.tableMergeCellInstance) {
+                table.tableMergeCellInstance.destroy()
+            }
+            if (table.tableColumnResizerInstance) {
+                table.tableColumnResizerInstance.destroy()
+            }
+        })
+        this.tables = null
+
+        if (this.iconTable) {
+            this.iconTable.removeEventListener('click', this.addInsertTextListener, false)
+        }
+        if (this.insertText) {
+            this.insertText.removeEventListener('click', this.initTableInteraction, false)
+        }
     },
 }
