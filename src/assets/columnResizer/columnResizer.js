@@ -121,10 +121,6 @@ export default class ColumnResizer {
         }
     }
 
-    mouseleave = () => {
-        this.mouseup()
-    }
-
     mouseup = (e) => {
         if (this.handshank) {
             const {clientX} = e
@@ -135,8 +131,7 @@ export default class ColumnResizer {
             const calcWidth = width + this.diff
             const {colMinWidth} = this.opts
             const newWidth = Math.max(colMinWidth, calcWidth)
-            if (clientX - this.clientX === 0) return
-            if (this.tableEle.contains(this.handshank)) {
+            if (this.tableEle.contains(this.handshank) && clientX - this.clientX !== 0) {
                 currentCol.style.width = `${newWidth}px`
             }
             this.handshank.style.transform = 'none'
@@ -152,13 +147,11 @@ export default class ColumnResizer {
         window.addEventListener('mousedown', this.mousedown, false)
         window.addEventListener('mousemove', this.mousemove, false)
         window.addEventListener('mouseup', this.mouseup, false)
-        // this.tableEle.addEventListener('mouseleave', this.mouseleave, false)
     }
 
     removeEvent () {
         window.removeEventListener('mousedown', this.mousedown, false)
         window.removeEventListener('mousemove', this.mousemove, false)
         window.removeEventListener('mouseup', this.mouseup, false)
-        // this.tableEle.removeEventListener('mouseleave', this.mouseleave, false)
     }
 }

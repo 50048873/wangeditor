@@ -20,6 +20,13 @@ export default class TableMergeCell {
         return c
     }
 
+    static getIndexDefaultValue () {
+        return {
+            row: -1,
+            col: -1,
+        }
+    }
+
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
@@ -97,14 +104,8 @@ export default class TableMergeCell {
         this.ready = false
         this.cellStart = null
         this.cellEnd = null
-        this.indexStart = {
-            row: -1,
-            col: -1,
-        }
-        this.indexEnd = {
-            row: -1,
-            col: -1,
-        }
+        this.indexStart = TableMergeCell.getIndexDefaultValue()
+        this.indexEnd = TableMergeCell.getIndexDefaultValue()
         this.maxRowCount = 0
         this.maxColCount = 0
         this.contextmenuCell = null
@@ -118,7 +119,7 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.addFocusEle()
-        this.addCellLocation()
+        // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -273,16 +274,16 @@ export default class TableMergeCell {
     selectedCellsIsValid () {
         const cellStart_rowspan = this.cellStart.getAttribute('rowspan')
         const cellEnd_rowspan = this.cellEnd && this.cellEnd.getAttribute('rowspan')
+        // '不符合合并规则：选中区域不能包含已合并的单元格。'
         if (cellStart_rowspan || cellEnd_rowspan) {
-            // console.log('不符合合并规则：选中区域不能包含已合并的单元格。')
             return false
         } 
         const selectedCells = this.getSelectedCells()
         const isInvalid = Array.from(selectedCells).some(ele => {
             return ele.style.display === 'none' || this.getIsMergedCellBool(ele)
         })
+        // '不符合合并规则：不能有隐藏的单元格或合并的单元格。'
         if (isInvalid) {
-            // console.log('不符合合并规则：不能有隐藏的单元格或合并的单元格。')
             return false
         }
         return true
@@ -495,17 +496,6 @@ export default class TableMergeCell {
 
     // 删除表格
     delTable () {
-        /*this.$confirm({
-            title: '删除确认？',
-            content: '您确认删除表格吗？',
-            zIndex: 10009,
-            onOk () {
-                console.log('ok')
-            },
-            onCancel () {
-                console.log('cancel')
-            },
-        })*/
         this.tableEle.remove()
     }
 
@@ -753,7 +743,6 @@ export default class TableMergeCell {
         const evt = new Event('ClipboardEvent')
         evt.initEvent('copy', true, true)
         document.dispatchEvent(evt)
-        console.log(evt)
     }*/
 
     // 右击粘贴
@@ -765,7 +754,6 @@ export default class TableMergeCell {
         const evt = new Event('ClipboardEvent')
         evt.initEvent('paste', true, true)
         document.dispatchEvent(evt)
-        console.log(evt)
     }*/
 
     // 点击右键菜单项时
@@ -778,67 +766,51 @@ export default class TableMergeCell {
         const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
             /*case 'doCopy':
-                console.log('复制')
                 this.doCopy()
                 break
             case 'doPaste':
-                console.log('粘贴')
                 this.doPaste()
                 break*/
             case 'textAlignLeft':
-                console.log('靠左')
                 this.textAlignLeft()
                 break
             case 'textAlignCenter':
-                console.log('居中')
                 this.textAlignCenter()
                 break
             case 'textAlignRight':
-                console.log('靠右')
                 this.textAlignRight()
                 break
             case 'addBackgroundColor':
-                console.log('设置背景色')
                 this.addBackgroundColor()
                 break
             case 'delBackgroundColor':
-                console.log('删除背景色')
                 this.delBackgroundColor()
                 break
             case 'delTable':
-                console.log('删除表格')
                 this.delTable()
                 break
             case 'addRow':
-                console.log('添加行')
                 this.addRow(row)
                 break
             case 'delRow':
-                console.log('删除行')
                 this.delRow(row)
                 break
             case 'addCol':
-                console.log('添加列')
                 this.addCol(col)
                 break
             case 'delCol':
-                console.log('删除列')
                 this.delCol(col)
                 break
             case 'addTh':
-                console.log('设置表头')
                 this.addTh()
                 break
             case 'delTh':
-                console.log('取消表头')
                 this.delTh()
                 break
             case 'merge':
-                console.log('合并单元格')
                 this.mergeCell()
                 break
             case 'unMerge':
-                console.log('取消合并单元格')
                 this.unMergeCell()
                 break
         }
@@ -1009,14 +981,25 @@ export default class TableMergeCell {
     paste = (e) => {
         const selectedCells = this.getSelectedCells()
         if (!selectedCells.length) return
-        // console.log('paste')
         if (/<.+>/.test(TableMergeCell.copyedContent)) {
             e.preventDefault()
             const clipboardData = e.clipboardData || window.clipboardData
             const data = clipboardData.getData('text')
             const arr = data.split(TableMergeCell.separator)
             this.pasteWithRule(selectedCells, arr)
+            this.indexStart = TableMergeCell.getIndexDefaultValue()
+            this.indexEnd = TableMergeCell.getIndexDefaultValue()
             // console.log(selectedCells, arr)
+        }
+    }
+
+    keydown = (e) => {
+        const {key} = e
+        if (key === 'Delete') {
+            const selectedCells = this.getSelectedCells()
+            selectedCells.forEach(cell => {
+                cell.innerHTML = ''
+            })
         }
     }
 
@@ -1029,6 +1012,7 @@ export default class TableMergeCell {
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
         window.addEventListener('copy', this.copy, false)
         window.addEventListener('paste', this.paste, false)
+        window.addEventListener('keydown', this.keydown, true)
     }
 
     removeEvent () {
@@ -1040,5 +1024,6 @@ export default class TableMergeCell {
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
         window.removeEventListener('copy', this.copy, false)
         window.removeEventListener('paste', this.paste, false)
+        window.removeEventListener('keydown', this.keydown, true)
     }
 }
