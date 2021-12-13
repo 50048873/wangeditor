@@ -9,7 +9,13 @@ export default class TableMergeCell {
 
     static focusEle = null
 
+    // 字符串或一维数组
     static copyedContent = ''
+
+    static copyedIndexRange = {}
+
+    // 二维数组
+    static copyedCellsArray = []
 
     static colorToRgb (color) {
         var span = document.createElement('span')
@@ -252,22 +258,29 @@ export default class TableMergeCell {
     }
 
     // 获取选取的单元格
-    getSelectedCells () {
+    getSelectedCells (isTwoDimensionalArray = false) {
         const {indexStart, indexEnd} = this
         let selectedCells = []
+        let selectedCellsTwoDimensionalArray = []
         const {rows} = this
         for (let i = 0; i < this.maxRowCount; i++) {
             const tr = rows[i]
             const {children} = tr
             const childLen = children.length
+            let rowArray = []
             for (let j = 0; j < childLen; j++) {
                 const cell = children[j]
                 if (i >= indexStart.row && i <= indexEnd.row && j >= indexStart.col && j <= indexEnd.col) {
                     selectedCells.push(cell)
+                    rowArray.push(cell)
                 } 
             }
+            if (rowArray.length) {
+                selectedCellsTwoDimensionalArray.push(rowArray)
+            }
         }
-        return selectedCells
+
+        return isTwoDimensionalArray ? selectedCellsTwoDimensionalArray : selectedCells
     }
 
     // 判断选取的单元格是否有效
@@ -949,17 +962,23 @@ export default class TableMergeCell {
             } else if (window.clipboardData) {
                 window.clipboardData.setData('text', TableMergeCell.copyedContent)
             }
+
+            // 记录行列范围
+            TableMergeCell.copyedIndexRange = {
+                indexStart: this.indexStart,
+                indexEnd: this.indexEnd,
+            }
+            // 二维数组记录复制的单元格
+            TableMergeCell.copyedCellsArray = this.getSelectedCells(true)
         }
-        // console.log(TableMergeCell.copyedContent)
     }
 
     pasteWithRule (targetCells, resourceCells) {
         const lenT = targetCells.length
         const lenR = resourceCells.length
-        if (lenT !== lenR) return
-        for (let i = 0; i < lenT; i++) {
-            const cellT = targetCells[i]
-            const cellR = resourceCells[i]
+        if (lenT === 1 && lenR === 1) {
+            const cellT = targetCells[0]
+            const cellR = resourceCells[0]
             const spans = this.getCellSpanProperty(cellT)
             const rowspanT = spans.rowspan
             const colspanT = spans.colspan
@@ -974,6 +993,62 @@ export default class TableMergeCell {
             }
             if (rowspanT === rowspanR && colspanT === colspanR) {
                 cellT.outerHTML = cellR
+            } else {
+                if ((rowspanR > 1 || colspanR > 1) && (rowspanT <= 1 && colspanT <= 1)) {
+                    cellT.outerHTML = cellR.replace(/rowspan=\"\d+\"\s/, '').replace(/colspan=\"\d+\"\s/, '')
+                } else if ((rowspanT > 1 || colspanT > 1) && (rowspanR <= 1 && colspanR <= 1)) {
+                    cellT.outerHTML = cellR.replace('<td', `<td colspan="${colspanT}"`).replace('<td', `<td rowspan="${rowspanT}"`)
+                }
+            }
+        } else if (lenT === lenR) { // 多对多（长度相等）
+            for (let i = 0; i < lenT; i++) {
+                const cellT = targetCells[i]
+                const cellR = resourceCells[i]
+                const spans = this.getCellSpanProperty(cellT)
+                const rowspanT = spans.rowspan
+                const colspanT = spans.colspan
+                const m1 = cellR.match(/rowspan="(\d+)"/)
+                const m2 = cellR.match(/colspan="(\d+)"/)
+                let rowspanR = 0, colspanR = 0
+                if (m1 && m1[1]) {
+                    rowspanR = m1[1] * 1
+                }
+                if (m2 && m2[1]) {
+                    colspanR = m2[1] * 1
+                }
+                if (rowspanT === rowspanR && colspanT === colspanR) {
+                    cellT.outerHTML = cellR
+                }
+            }
+        } else if (lenR > lenT && lenT === 1) { // 多对一（简化多对多操作）
+            const index = this.indexStart
+            const {indexStart, indexEnd} = TableMergeCell.copyedIndexRange
+            const pastedIndexRange = {
+                indexStart: index,
+                indexEnd: {
+                    row: index.row + indexEnd.row - indexStart.row,
+                    col: index.col + indexEnd.col - indexStart.col,
+                }
+            }
+            const rowStart = pastedIndexRange.indexStart.row
+            const rowEnd = pastedIndexRange.indexEnd.row
+            const colStart = pastedIndexRange.indexStart.col
+            const colEnd = pastedIndexRange.indexEnd.col
+            const {rows} = this
+            let cells = []
+            for (let i = rowStart, k = 0; i <= rowEnd; i++, k++) {
+                const row = rows[i]
+                if (!row) continue
+                const cols = row.children
+                for (let j = colStart, h = 0; j <= colEnd; j++, h++) {
+                    const col = cols[j]
+                    if (!col) continue
+                    const copyedCell = TableMergeCell.copyedCellsArray[k][h]
+                    const {rowspan, colspan} = this.getCellSpanProperty(col)
+                    if (rowspan <= 1 && colspan <= 1) {
+                        col.outerHTML = copyedCell.outerHTML
+                    }
+                }
             }
         }
     }
@@ -989,7 +1064,6 @@ export default class TableMergeCell {
             this.pasteWithRule(selectedCells, arr)
             this.indexStart = TableMergeCell.getIndexDefaultValue()
             this.indexEnd = TableMergeCell.getIndexDefaultValue()
-            // console.log(selectedCells, arr)
         }
     }
 

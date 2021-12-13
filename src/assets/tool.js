@@ -8,6 +8,7 @@ export const wangEditorTableExtend = {
     mounted() {
         this.$nextTick(() => {
             this.addInsertTableIconlistener()
+            this.addPasteTableListener()
         })
     },
     updated() {
@@ -49,6 +50,14 @@ export const wangEditorTableExtend = {
         addInsertTableIconlistener() {
             this.iconTable = this.$refs.editor.querySelector("[data-title='表格']")
             this.iconTable && this.iconTable.addEventListener('click', this.addInsertTextListener, false)
+        },
+        addPasteTableListener() {
+            this.$refs.editor.addEventListener('paste', (e) => {
+                const pasteData = (event.clipboardData || window.clipboardData).getData('text/html')
+                if (pasteData && pasteData.includes('<table')) {
+                    this.initTableInteraction()
+                }
+            }, false)
         },
     },
     beforeDestroy() {

@@ -1,5 +1,6 @@
 .tableMergeCell {
     table-layout: fixed;
+    border-collapse: collapse;
     th, td {
         position: relative;
         height: 30px;
@@ -10,6 +11,7 @@
         &:before {
             content: '';
             position: absolute;
+            z-index: 1;
             top: 0;
             right: 0;
             bottom: 0;
