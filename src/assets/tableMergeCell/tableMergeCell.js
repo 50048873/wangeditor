@@ -70,6 +70,14 @@ export default class TableMergeCell {
                 key: 'delBackgroundColor',
             },
             {
+                name: '合并单元格',
+                key: 'merge',
+            }, 
+            {
+                name: '取消合并单元格',
+                key: 'unMerge',
+            },
+            {
                 name: '添加行',
                 key: 'addRow',
             },
@@ -94,14 +102,6 @@ export default class TableMergeCell {
                 key: 'delTh',
             },
             {
-                name: '合并单元格',
-                key: 'merge',
-            }, 
-            {
-                name: '取消合并单元格',
-                key: 'unMerge',
-            },
-            {
                 name: '删除表格',
                 key: 'delTable',
             },
@@ -123,6 +123,7 @@ export default class TableMergeCell {
         if (!this.tableEle && this.tableEle.ELEMENT_NODE !== 1 && this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
+        this.handleTableFromExcel()
         this.tableEle.classList.add(this.tableClassName)
         this.addFocusEle()
         // this.addCellLocation()
@@ -130,6 +131,7 @@ export default class TableMergeCell {
         this.addEvent()
     }
 
+    // 销毁
     destroy () {
         this.removeEvent()
         if (this.menuEle) {
@@ -137,6 +139,37 @@ export default class TableMergeCell {
             this.menuEle.remove()
         }
         TableMergeCell.focusEle && TableMergeCell.focusEle.remove()
+    }
+
+    // 补齐从excel复制粘贴过来的表格单元格
+    handleTableFromExcel (table) {
+        const [colgroup, tbody] = this.tableEle.children
+        if (colgroup.tagName === 'COLGROUP') {
+            const rows = tbody.children
+            const rowLen = rows.length
+            for (let i = 0; i < rowLen; i++) {
+                const row = rows[i]
+                const cells = row.cells
+                const colLen = cells.length
+                for (let j = 0; j < colLen; j++) {
+                    const cell = cells[j]
+                    const rowspan = cell.getAttribute('rowspan')
+                    const colspan = cell.getAttribute('colspan')
+                    if (rowspan >= 1) {
+                        for (let k = 1; k < rowspan; k++) {
+                            const newCell = rows[i + k].insertCell(j)
+                            newCell.style.display = 'none'
+                        }
+                    }
+                    if (colspan >= 1) {
+                        for (let k = 1; k < colspan; k++) {
+                            const newCell = row.insertCell(j + k)
+                            newCell.style.display = 'none'
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // 创建焦点元素
@@ -292,7 +325,7 @@ export default class TableMergeCell {
             return false
         } 
         const selectedCells = this.getSelectedCells()
-        const isInvalid = Array.from(selectedCells).some(ele => {
+        const isInvalid = selectedCells.some(ele => {
             return ele.style.display === 'none' || this.getIsMergedCellBool(ele)
         })
         // '不符合合并规则：不能有隐藏的单元格或合并的单元格。'
@@ -308,7 +341,7 @@ export default class TableMergeCell {
         const {indexStart, indexEnd} = this
         const rowspan = indexEnd.row - indexStart.row + 1
         const colspan = indexEnd.col - indexStart.col + 1
-        Array.from(selectedCells).forEach((ele, index) => {
+        selectedCells.forEach((ele, index) => {
             if (index === 0) {
                 ele.setAttribute('rowspan', rowspan)
                 ele.setAttribute('colspan', colspan)
@@ -320,21 +353,16 @@ export default class TableMergeCell {
     }
 
     // 取消合并单元格
-    unMergeCell = (cell) => {
+    unMergeCell = () => {
         let cellSpanProperty = null
-        if (cell) {
-            this.indexStart = this.getCellIndex(cell)
-            cellSpanProperty = this.getCellSpanProperty(cell)
-        } else {
-            this.indexStart = this.getCellIndex(this.contextmenuCell)
-            cellSpanProperty = this.getCellSpanProperty(this.contextmenuCell)
-        }
+        this.indexStart = this.getCellIndex(this.cellEnd)
+        cellSpanProperty = this.getCellSpanProperty(this.cellEnd)
         this.indexEnd = {
             row: cellSpanProperty.rowspan - 1 + this.indexStart.row,
             col: cellSpanProperty.colspan - 1 + this.indexStart.col,
         }
         const selectedCells = this.getSelectedCells()
-        Array.from(selectedCells).forEach((ele, index) => {
+        selectedCells.forEach((ele, index) => {
             if (index === 0) {
                 ele.removeAttribute('rowspan')
                 ele.removeAttribute('colspan')
@@ -390,9 +418,13 @@ export default class TableMergeCell {
 
     // 获取单元格rowspan, colspan属性值
     getCellSpanProperty (cell) {
+        let rowspan = cell.getAttribute('rowspan')
+        let colspan = cell.getAttribute('colspan')
+        rowspan = rowspan ? rowspan * 1 : 1
+        colspan = colspan ? colspan * 1 : 1
         return {
-            rowspan: cell.getAttribute('rowspan') * 1,
-            colspan: cell.getAttribute('colspan') * 1,
+            rowspan,
+            colspan,
         }
     }
 
@@ -434,21 +466,25 @@ export default class TableMergeCell {
     handleMenuBtnMergeStatus (cell) {
         const {btnDisabledColor} = this.opts
         this.isMergedCell = this.getIsMergedCellBool(cell)
-        /**
-        * 1.开始选中的单元格是否等于最后选中的单元格
-        * 2.是否合并
-        * 3.直接右键点击，未选中单元格时的情况
-        */
-
-        if ((this.cellStart === this.cellEnd || !cell.className.includes(this.selectedCellClassName)) && !cell.getAttribute('rowspan')) {
+        const selectedCells = this.getSelectedCellsByClassName()
+        if (!selectedCells.length) {
             this.btn_merge.style.color = btnDisabledColor
             this.btn_unMerge.style.color = btnDisabledColor
-        } else if (this.getIsMergedCellBool(cell)) {
-            this.btn_merge.style.color = btnDisabledColor
-            this.btn_unMerge.style.removeProperty('color')
         } else {
-            this.btn_merge.style.removeProperty('color')
-            this.btn_unMerge.style.color = btnDisabledColor
+            if (this.cellStart === this.cellEnd) {
+                if (this.cellEnd.getAttribute('rowspan') || this.cellEnd.getAttribute('colspan')) {
+                    this.btn_unMerge.style.removeProperty('color')
+                } else {
+                    this.btn_merge.style.color = btnDisabledColor
+                    this.btn_unMerge.style.color = btnDisabledColor
+                }
+            } else if (this.getIsMergedCellBool(cell)) {
+                this.btn_merge.style.color = btnDisabledColor
+                this.btn_unMerge.style.removeProperty('color')
+            } else {
+                this.btn_merge.style.removeProperty('color')
+                this.btn_unMerge.style.color = btnDisabledColor
+            }
         }
     }
 

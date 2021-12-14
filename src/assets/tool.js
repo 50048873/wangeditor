@@ -30,6 +30,7 @@ export const wangEditorTableExtend = {
             this.tables = this.$refs.editor.querySelectorAll('.w-e-text table')
             this.tables.forEach(table => {
                 if (!tableIsInTable(table)) {
+                    // TableMergeCell.handleTableFromExcel(table)
                     if (!table.tableMergeCellInstance) {
                         table.tableMergeCellInstance = new TableMergeCell(table, {
                             onAddCol: () => {
