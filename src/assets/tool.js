@@ -30,7 +30,6 @@ export const wangEditorTableExtend = {
             this.tables = this.$refs.editor.querySelectorAll('.w-e-text table')
             this.tables.forEach(table => {
                 if (!tableIsInTable(table)) {
-                    // TableMergeCell.handleTableFromExcel(table)
                     if (!table.tableMergeCellInstance) {
                         table.tableMergeCellInstance = new TableMergeCell(table, {
                             onAddCol: () => {
@@ -44,7 +43,7 @@ export const wangEditorTableExtend = {
                 }
             })
         },
-        addInsertTextListener() {
+        addInsertTextListener(e) {
             this.insertText = this.iconTable.querySelector('button.right')
             this.insertText && this.insertText.addEventListener('click', this.initTableInteraction, false)
         },
@@ -79,4 +78,13 @@ export const wangEditorTableExtend = {
             this.insertText.removeEventListener('click', this.initTableInteraction, false)
         }
     },
+}
+
+export const handleTable = (table) => {
+    console.log(table)
+    const wrap = document.createElement('div')
+    wrap.innerHTML = table.outerHTML
+    wrap.style.overflowX = 'auto'
+    const parentWrap = table.parentNode
+    parentWrap.replaceChild(wrap, table)
 }

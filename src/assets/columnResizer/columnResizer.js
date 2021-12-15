@@ -65,7 +65,7 @@ export default class ColumnResizer {
         cells.forEach((cell, index) => {
             const handshank = cell.querySelector(`.${this.handshankCls}`)
             handshank && handshank.remove()
-            const i = `&emsp;<i data-col="${index}" contenteditable="false" class="${this.handshankCls}"></i>`
+            const i = `<i data-col="${index}" contenteditable="false" class="${this.handshankCls}"></i>`
             cell.insertAdjacentHTML('beforeend', i)
         })
     }

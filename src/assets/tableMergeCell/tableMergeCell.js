@@ -33,6 +33,13 @@ export default class TableMergeCell {
         }
     }
 
+    static getTargetParentCell (target) {
+        while (target.tagName !== 'TD' && target.tagName !== 'TH' && target.parentNode) {
+            target = target.parentNode
+        }
+        return target
+    }
+
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
@@ -123,8 +130,8 @@ export default class TableMergeCell {
         if (!this.tableEle && this.tableEle.ELEMENT_NODE !== 1 && this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
-        this.handleTableFromExcel()
         this.tableEle.classList.add(this.tableClassName)
+        this.handleTableFromExcel()
         this.addFocusEle()
         // this.addCellLocation()
         this.syncMaxRowAndColCount()
@@ -142,7 +149,7 @@ export default class TableMergeCell {
     }
 
     // 补齐从excel复制粘贴过来的表格单元格
-    handleTableFromExcel (table) {
+    handleTableFromExcel () {
         const [colgroup, tbody] = this.tableEle.children
         if (colgroup.tagName === 'COLGROUP') {
             const rows = tbody.children
@@ -507,7 +514,7 @@ export default class TableMergeCell {
     }
 
     // 当未选取单元格时，控制部分右键菜单项是否可点击
-    handleSomeMenuBtns (target) {
+    handleSomeMenuBtns () {
         const {btnDisabledColor} = this.opts
         const selectedCells = this.getSelectedCellsByClassName()
         if (selectedCells.length) {
@@ -704,7 +711,7 @@ export default class TableMergeCell {
 
     // 删除列
     delCol (index) {
-        const {tBody, rows} = this
+        const {rows} = this
         const relatedCellsArray = this.getRelatedMergedColCells(index)
         relatedCellsArray.forEach(cell => {
             const {col} = this.getCellIndex(cell)
@@ -869,8 +876,9 @@ export default class TableMergeCell {
     }
 
     mousedown = (e) => {
-        const {target, button} = e
+        let {target, button} = e
         if (this.tableIsInTable(target) || button !== 0) return
+        target = TableMergeCell.getTargetParentCell(target)
         const {tagName} = target
         if (tagName === 'TD' || tagName === 'TH') {
             this.ready = true
@@ -901,7 +909,9 @@ export default class TableMergeCell {
 
     mousemove = (e) => {
         if (this.ready) {
-            const {target} = e
+            let {target} = e
+            target = TableMergeCell.getTargetParentCell(target)
+            if (!this.tableEle.contains(target)) return
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
             this.removeClass()
@@ -914,8 +924,9 @@ export default class TableMergeCell {
     }
 
     mouseup = (e) => {
-        const {target, button} = e
+        let {target, button} = e
         if (button === 0 && this.ready) {
+            target = TableMergeCell.getTargetParentCell(target)
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
             this.ready = false
@@ -1031,7 +1042,7 @@ export default class TableMergeCell {
                 cellT.outerHTML = cellR
             } else {
                 if ((rowspanR > 1 || colspanR > 1) && (rowspanT <= 1 && colspanT <= 1)) {
-                    cellT.outerHTML = cellR.replace(/rowspan=\"\d+\"\s/, '').replace(/colspan=\"\d+\"\s/, '')
+                    cellT.outerHTML = cellR.replace(/rowspan.+?\s/, '').replace(/colspan.+?\s/, '')
                 } else if ((rowspanT > 1 || colspanT > 1) && (rowspanR <= 1 && colspanR <= 1)) {
                     cellT.outerHTML = cellR.replace('<td', `<td colspan="${colspanT}"`).replace('<td', `<td rowspan="${rowspanT}"`)
                 }
@@ -1071,7 +1082,6 @@ export default class TableMergeCell {
             const colStart = pastedIndexRange.indexStart.col
             const colEnd = pastedIndexRange.indexEnd.col
             const {rows} = this
-            let cells = []
             for (let i = rowStart, k = 0; i <= rowEnd; i++, k++) {
                 const row = rows[i]
                 if (!row) continue
