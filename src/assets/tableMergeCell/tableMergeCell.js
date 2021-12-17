@@ -40,6 +40,19 @@ export default class TableMergeCell {
         return target
     }
 
+    static handleExcelData (values) {
+        values = values.replace(/\n/g, 'n').replace(/\s/g, ',').replace(/,{2,}/g, ',')
+        values = values.substring(0, values.length - 2)
+        const arr1 = values.split(',n')
+        let res = []
+        arr1.forEach(item => {
+            const arr2 = item.split(',')
+            res.push(arr2)
+        })
+        res = JSON.stringify(res)
+        return res
+    }
+
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
@@ -48,14 +61,6 @@ export default class TableMergeCell {
         this.tableClassName = 'tableMergeCell'
         this.menuEle = null
         this.menus = [
-            /*{
-                name: '复制',
-                key: 'doCopy',
-            },
-            {
-                name: '粘贴',
-                key: 'doPaste',
-            },*/
             {
                 name: '靠左',
                 key: 'textAlignLeft',
@@ -345,13 +350,28 @@ export default class TableMergeCell {
     // 合并单元格
     mergeCell = () => {
         const selectedCells = this.getSelectedCells()
+        const len = selectedCells.length
         const {indexStart, indexEnd} = this
         const rowspan = indexEnd.row - indexStart.row + 1
         const colspan = indexEnd.col - indexStart.col + 1
+        let firstHasValueCell = null
+        for (let i = 0; i < len; i++) {
+            const cell = selectedCells[i]
+            if (cell.innerText) {
+                firstHasValueCell = cell
+                break
+            }
+        }
         selectedCells.forEach((ele, index) => {
             if (index === 0) {
                 ele.setAttribute('rowspan', rowspan)
                 ele.setAttribute('colspan', colspan)
+                if (!ele.innerText && firstHasValueCell) {
+                    ele.innerHTML = firstHasValueCell.innerHTML
+                    ele.removeAttribute('style')
+                    const style = firstHasValueCell.getAttribute('style')
+                    style && ele.setAttribute('style', style)
+                }
             } else {
                 ele.style.display = 'none'
             }
@@ -790,28 +810,6 @@ export default class TableMergeCell {
         })
     }
 
-    // 右击拷贝
-    /*doCopy () {
-        // const evt = document.createEvent('UIEvents')
-        // evt.initEvent('copy', true, true)
-        // document.dispatchEvent(evt)
-
-        const evt = new Event('ClipboardEvent')
-        evt.initEvent('copy', true, true)
-        document.dispatchEvent(evt)
-    }*/
-
-    // 右击粘贴
-    /*doPaste () {
-        // const evt = document.createEvent('UIEvents')
-        // evt.initEvent('paste', true, true)
-        // document.dispatchEvent(evt)
-
-        const evt = new Event('ClipboardEvent')
-        evt.initEvent('paste', true, true)
-        document.dispatchEvent(evt)
-    }*/
-
     // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
@@ -821,12 +819,6 @@ export default class TableMergeCell {
         const key = target.dataset.key
         const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
-            /*case 'doCopy':
-                this.doCopy()
-                break
-            case 'doPaste':
-                this.doPaste()
-                break*/
             case 'textAlignLeft':
                 this.textAlignLeft()
                 break
@@ -992,11 +984,17 @@ export default class TableMergeCell {
     }
 
     copy = (e) => {
-        const selectionStr = window.getSelection().toString()
+        e.preventDefault()
+        let selectionStr = window.getSelection().toString()
         if (selectionStr) {
+            // selectionStr = selectionStr.replace(/[\n|\r|\t]*/, '')
             TableMergeCell.copyedContent = selectionStr
+            if (e.clipboardData) {
+                e.clipboardData.setData('text/plain', selectionStr)
+            } else if (window.clipboardData) {
+                window.clipboardData.setData('text', selectionStr)
+            }
         } else {
-            e.preventDefault()
             const selectedCells = this.getSelectedCells()
             if (!selectedCells.length) return
             let arr = []
@@ -1023,31 +1021,7 @@ export default class TableMergeCell {
     pasteWithRule (targetCells, resourceCells) {
         const lenT = targetCells.length
         const lenR = resourceCells.length
-        if (lenT === 1 && lenR === 1) {
-            const cellT = targetCells[0]
-            const cellR = resourceCells[0]
-            const spans = this.getCellSpanProperty(cellT)
-            const rowspanT = spans.rowspan
-            const colspanT = spans.colspan
-            const m1 = cellR.match(/rowspan="(\d+)"/)
-            const m2 = cellR.match(/colspan="(\d+)"/)
-            let rowspanR = 0, colspanR = 0
-            if (m1 && m1[1]) {
-                rowspanR = m1[1] * 1
-            }
-            if (m2 && m2[1]) {
-                colspanR = m2[1] * 1
-            }
-            if (rowspanT === rowspanR && colspanT === colspanR) {
-                cellT.outerHTML = cellR
-            } else {
-                if ((rowspanR > 1 || colspanR > 1) && (rowspanT <= 1 && colspanT <= 1)) {
-                    cellT.outerHTML = cellR.replace(/rowspan.+?\s/, '').replace(/colspan.+?\s/, '')
-                } else if ((rowspanT > 1 || colspanT > 1) && (rowspanR <= 1 && colspanR <= 1)) {
-                    cellT.outerHTML = cellR.replace('<td', `<td colspan="${colspanT}"`).replace('<td', `<td rowspan="${rowspanT}"`)
-                }
-            }
-        } else if (lenT === lenR) { // 多对多（长度相等）
+        if (lenT === lenR) { // 多对多（长度相等）
             for (let i = 0; i < lenT; i++) {
                 const cellT = targetCells[i]
                 const cellR = resourceCells[i]
@@ -1056,14 +1030,25 @@ export default class TableMergeCell {
                 const colspanT = spans.colspan
                 const m1 = cellR.match(/rowspan="(\d+)"/)
                 const m2 = cellR.match(/colspan="(\d+)"/)
-                let rowspanR = 0, colspanR = 0
+                let rowspanR = 1, colspanR = 1
                 if (m1 && m1[1]) {
                     rowspanR = m1[1] * 1
                 }
                 if (m2 && m2[1]) {
                     colspanR = m2[1] * 1
                 }
-                if (rowspanT === rowspanR && colspanT === colspanR) {
+                
+                if (lenT === 1 && lenR === 1) { // 长度都是1
+                    if (rowspanT === rowspanR && colspanT === colspanR) {
+                        cellT.outerHTML = cellR
+                    } else {
+                        if ((rowspanR > 1 || colspanR > 1) && (rowspanT <= 1 && colspanT <= 1)) {
+                            cellT.outerHTML = cellR.replace(/rowspan.+?\s/, '').replace(/colspan.+?\s/, '')
+                        } else if ((rowspanT > 1 || colspanT > 1) && (rowspanR <= 1 && colspanR <= 1)) {
+                            cellT.outerHTML = cellR.replace('<td', `<td colspan="${colspanT}"`).replace('<td', `<td rowspan="${rowspanT}"`)
+                        }
+                    }
+                } else if (rowspanT === rowspanR && colspanT === colspanR) { // 长度相等且都大于1
                     cellT.outerHTML = cellR
                 }
             }
@@ -1100,6 +1085,9 @@ export default class TableMergeCell {
     }
 
     paste = (e) => {
+        const clipboardData = e.clipboardData || window.clipboardData
+        const data = clipboardData.getData('text')
+
         const selectedCells = this.getSelectedCells()
         if (!selectedCells.length) return
         if (/<.+>/.test(TableMergeCell.copyedContent)) {
@@ -1110,6 +1098,11 @@ export default class TableMergeCell {
             this.pasteWithRule(selectedCells, arr)
             this.indexStart = TableMergeCell.getIndexDefaultValue()
             this.indexEnd = TableMergeCell.getIndexDefaultValue()
+        } else if (clipboardData.items.length > 1) {
+            e.preventDefault()
+            const excelData = TableMergeCell.handleExcelData(data)
+            const selectedCells = this.getSelectedCells(true)
+            console.log(selectedCells, excelData)
         }
     }
 

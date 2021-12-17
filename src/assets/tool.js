@@ -43,7 +43,7 @@ export const wangEditorTableExtend = {
                 }
             })
         },
-        addInsertTextListener(e) {
+        addInsertTextListener() {
             this.insertText = this.iconTable.querySelector('button.right')
             this.insertText && this.insertText.addEventListener('click', this.initTableInteraction, false)
         },
@@ -51,13 +51,14 @@ export const wangEditorTableExtend = {
             this.iconTable = this.$refs.editor.querySelector("[data-title='表格']")
             this.iconTable && this.iconTable.addEventListener('click', this.addInsertTextListener, false)
         },
+        handlePaste(event) {
+            const pasteData = (event.clipboardData || window.clipboardData).getData('text/html')
+            if (pasteData && pasteData.includes('<table')) {
+                this.initTableInteraction()
+            }
+        },
         addPasteTableListener() {
-            this.$refs.editor.addEventListener('paste', (e) => {
-                const pasteData = (event.clipboardData || window.clipboardData).getData('text/html')
-                if (pasteData && pasteData.includes('<table')) {
-                    this.initTableInteraction()
-                }
-            }, false)
+            this.$refs.editor.addEventListener('paste', this.handlePaste, false)
         },
     },
     beforeDestroy() {
@@ -77,14 +78,17 @@ export const wangEditorTableExtend = {
         if (this.insertText) {
             this.insertText.removeEventListener('click', this.initTableInteraction, false)
         }
+        if (this.$refs.editor) {
+            this.$refs.editor.removeEventListener('paste', this.handlePaste, false)
+        }
     },
 }
 
-export const handleTable = (table) => {
+/*export const handleTable = (table) => {
     console.log(table)
     const wrap = document.createElement('div')
     wrap.innerHTML = table.outerHTML
     wrap.style.overflowX = 'auto'
     const parentWrap = table.parentNode
     parentWrap.replaceChild(wrap, table)
-}
+}*/
