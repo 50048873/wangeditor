@@ -1,18 +1,14 @@
 /* eslint-disable */
+import {Modal} from 'ant-design-vue'
+import 'ant-design-vue/lib/modal/style/css'
+
 const defaults = {
     btnDisabledColor: '#ddd', // 右键菜单禁用时的颜色
     onAddCol: null,             // 添加列完成后回调
 }
 
 export default class TableMergeCell {
-    static separator = ',%,#,$'
-
     static focusEle = null
-
-    // 字符串或一维数组
-    static copyedContent = ''
-
-    static copyedIndexRange = {}
 
     // 二维数组
     static copyedCellsArray = []
@@ -49,7 +45,6 @@ export default class TableMergeCell {
             const arr2 = item.split(',')
             res.push(arr2)
         })
-        res = JSON.stringify(res)
         return res
     }
 
@@ -758,7 +753,11 @@ export default class TableMergeCell {
             for (let i = 0; i < len; i++) {
                 const cell = children[i]
                 if (this.getIsMergedCellBool(cell)) {
-                    alert('请先取消第一行合并的单元格！')
+                    Modal && Modal.confirm({
+                        title: '提示',
+                        content: '请先手动取消第一行合并的单元格！',
+                        zIndex: 10009,
+                    })
                     break
                 }
                 const th = document.createElement('th')
@@ -987,79 +986,76 @@ export default class TableMergeCell {
         e.preventDefault()
         let selectionStr = window.getSelection().toString()
         if (selectionStr) {
-            // selectionStr = selectionStr.replace(/[\n|\r|\t]*/, '')
-            TableMergeCell.copyedContent = selectionStr
             if (e.clipboardData) {
                 e.clipboardData.setData('text/plain', selectionStr)
             } else if (window.clipboardData) {
                 window.clipboardData.setData('text', selectionStr)
             }
+            TableMergeCell.copyedCellsArray = []
         } else {
-            const selectedCells = this.getSelectedCells()
-            if (!selectedCells.length) return
-            let arr = []
-            selectedCells.forEach(cell => {
-                arr.push(cell.outerHTML)
-            })
-            TableMergeCell.copyedContent = arr.join(TableMergeCell.separator)
             if (e.clipboardData) {
-                e.clipboardData.setData('text/plain', TableMergeCell.copyedContent)
+                e.clipboardData.setData('text/plain', '')
             } else if (window.clipboardData) {
-                window.clipboardData.setData('text', TableMergeCell.copyedContent)
-            }
-
-            // 记录行列范围
-            TableMergeCell.copyedIndexRange = {
-                indexStart: this.indexStart,
-                indexEnd: this.indexEnd,
+                window.clipboardData.setData('text', '')
             }
             // 二维数组记录复制的单元格
             TableMergeCell.copyedCellsArray = this.getSelectedCells(true)
         }
     }
 
-    pasteWithRule (targetCells, resourceCells) {
-        const lenT = targetCells.length
-        const lenR = resourceCells.length
-        if (lenT === lenR) { // 多对多（长度相等）
-            for (let i = 0; i < lenT; i++) {
-                const cellT = targetCells[i]
-                const cellR = resourceCells[i]
-                const spans = this.getCellSpanProperty(cellT)
-                const rowspanT = spans.rowspan
-                const colspanT = spans.colspan
-                const m1 = cellR.match(/rowspan="(\d+)"/)
-                const m2 = cellR.match(/colspan="(\d+)"/)
-                let rowspanR = 1, colspanR = 1
-                if (m1 && m1[1]) {
-                    rowspanR = m1[1] * 1
-                }
-                if (m2 && m2[1]) {
-                    colspanR = m2[1] * 1
-                }
-                
-                if (lenT === 1 && lenR === 1) { // 长度都是1
+    handlePaste (targetCells, resourceCells) {
+        if (!Array.isArray(targetCells) || !Array.isArray(resourceCells)) {
+            throw new Errow('粘贴单元格或复制单元格不是数组')
+        }
+        const tRowLen = targetCells.length
+        const rRowLen = resourceCells.length
+        const targetCell0 = targetCells[0]
+        const resourceCell0 = resourceCells[0]
+        if (!targetCell0) {
+            throw new Error('粘贴的单元格未获取到第一行')
+        }
+        if (!resourceCell0) {
+            throw new Error('复制的单元格未获取到第一行')
+        }
+        const tColLen = targetCell0.length
+        const rColLen = resourceCell0.length
+        if (tRowLen === rRowLen && tColLen === rColLen) { // 多对多（行列长度都相同）
+            for (let i = 0; i < tRowLen; i++) {
+                const tRow = targetCells[i]
+                const rRow = resourceCells[i]
+                for (let j = 0; j < tColLen; j++) {
+                    const cellT = tRow[j]
+                    const cellR = rRow[j]
+                    if (!cellT || !cellR) continue
+                    if (typeof cellR === 'string') {
+                        cellT.innerText = cellR
+                        continue
+                    }
+                    const {rowspan: rowspanT, colspan: colspanT} = this.getCellSpanProperty(cellT)
+                    const {rowspan: rowspanR, colspan: colspanR} = this.getCellSpanProperty(cellR)
                     if (rowspanT === rowspanR && colspanT === colspanR) {
-                        cellT.outerHTML = cellR
+                        cellT.outerHTML = cellR.outerHTML
                     } else {
+                        const cellRcopy = cellR.cloneNode(true)
                         if ((rowspanR > 1 || colspanR > 1) && (rowspanT <= 1 && colspanT <= 1)) {
-                            cellT.outerHTML = cellR.replace(/rowspan.+?\s/, '').replace(/colspan.+?\s/, '')
+                            cellRcopy.removeAttribute('rowspan')
+                            cellRcopy.removeAttribute('colspan')
+                            cellT.outerHTML = cellRcopy.outerHTML
                         } else if ((rowspanT > 1 || colspanT > 1) && (rowspanR <= 1 && colspanR <= 1)) {
-                            cellT.outerHTML = cellR.replace('<td', `<td colspan="${colspanT}"`).replace('<td', `<td rowspan="${rowspanT}"`)
+                            cellRcopy.setAttribute('rowspan', rowspanT)
+                            cellRcopy.setAttribute('colspan', colspanT)
+                            cellT.outerHTML = cellRcopy.outerHTML
                         }
                     }
-                } else if (rowspanT === rowspanR && colspanT === colspanR) { // 长度相等且都大于1
-                    cellT.outerHTML = cellR
                 }
             }
-        } else if (lenR > lenT && lenT === 1) { // 多对一（简化多对多操作）
+        } else if ((rRowLen > 1 || rColLen > 1) && tRowLen === 1 && tColLen === 1) { // 多对一
             const index = this.indexStart
-            const {indexStart, indexEnd} = TableMergeCell.copyedIndexRange
             const pastedIndexRange = {
                 indexStart: index,
                 indexEnd: {
-                    row: index.row + indexEnd.row - indexStart.row,
-                    col: index.col + indexEnd.col - indexStart.col,
+                    row: index.row + rRowLen - 1,
+                    col: index.col + rColLen - 1,
                 }
             }
             const rowStart = pastedIndexRange.indexStart.row
@@ -1070,39 +1066,44 @@ export default class TableMergeCell {
             for (let i = rowStart, k = 0; i <= rowEnd; i++, k++) {
                 const row = rows[i]
                 if (!row) continue
-                const cols = row.children
+                const cells = row.children
                 for (let j = colStart, h = 0; j <= colEnd; j++, h++) {
-                    const col = cols[j]
-                    if (!col) continue
-                    const copyedCell = TableMergeCell.copyedCellsArray[k][h]
-                    const {rowspan, colspan} = this.getCellSpanProperty(col)
+                    const cell = cells[j]
+                    if (!cell) continue
+                    const copyedOneItem = resourceCells[k][h]
+                    if (!cell || !copyedOneItem) continue
+                    if (typeof copyedOneItem === 'string') {
+                        cell.innerText = copyedOneItem
+                        continue
+                    }
+                    const {rowspan, colspan} = this.getCellSpanProperty(cell)
                     if (rowspan <= 1 && colspan <= 1) {
-                        col.outerHTML = copyedCell.outerHTML
+                        cell.outerHTML = copyedOneItem.outerHTML
                     }
                 }
             }
+        } else {
+            Modal && Modal.confirm({
+                title: '提示',
+                content: '目前只支持两种模式：1、复制时选择的行列与粘贴时选择的行列相同（简称一对一或多对多）；2、复制时选择的行列不限，粘贴时只选一个单元格（简称多对一）；',
+                zIndex: 10009,
+            })
         }
     }
 
     paste = (e) => {
         const clipboardData = e.clipboardData || window.clipboardData
-        const data = clipboardData.getData('text')
-
-        const selectedCells = this.getSelectedCells()
-        if (!selectedCells.length) return
-        if (/<.+>/.test(TableMergeCell.copyedContent)) {
+        const selectedCells = this.getSelectedCells(true)
+        if (clipboardData.items.length > 1) {
             e.preventDefault()
-            const clipboardData = e.clipboardData || window.clipboardData
             const data = clipboardData.getData('text')
-            const arr = data.split(TableMergeCell.separator)
-            this.pasteWithRule(selectedCells, arr)
+            const excelData = TableMergeCell.handleExcelData(data)
+            this.handlePaste(selectedCells, excelData)
+        } else if (TableMergeCell.copyedCellsArray.length) {
+            e.preventDefault()
+            this.handlePaste(selectedCells, TableMergeCell.copyedCellsArray)
             this.indexStart = TableMergeCell.getIndexDefaultValue()
             this.indexEnd = TableMergeCell.getIndexDefaultValue()
-        } else if (clipboardData.items.length > 1) {
-            e.preventDefault()
-            const excelData = TableMergeCell.handleExcelData(data)
-            const selectedCells = this.getSelectedCells(true)
-            console.log(selectedCells, excelData)
         }
     }
 
