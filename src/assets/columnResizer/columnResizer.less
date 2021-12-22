@@ -1,18 +1,11 @@
 .tableMergeCell {
-    tbody {
-        tr:first-child {
-            th, td {
-                position: relative;
-            }
-        }
-    }
     .tableMergeCell-handshank {
         position: absolute;
         z-index: 1;
         top: 0;
         right: -5px;
         width: 10px;
-        height: 100%;
+        height: 30px;
         cursor: col-resize;
         // background-color: #8eb0e7;
     }
@@ -26,5 +19,13 @@
         border-right: 1px dashed #8eb0e7;
         position: absolute;
         left: 50%;
+    }
+    .tableMergeCell-handshank-container th {
+        background-color: transparent;
+        height: 0;
+        overflow: visible;
+        padding: 0;
+        border: 0;
+        position: relative;
     }
 }

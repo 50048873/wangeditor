@@ -3,7 +3,7 @@ import {Modal} from 'ant-design-vue'
 import 'ant-design-vue/lib/modal/style/css'
 
 const defaults = {
-    btnDisabledColor: '#ddd', // 右键菜单禁用时的颜色
+    btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
     onAddCol: null,             // 添加列完成后回调
 }
 
@@ -34,6 +34,13 @@ export default class TableMergeCell {
             target = target.parentNode
         }
         return target
+    }
+
+    static isTheadChild (target) {
+        while (target.tagName !== 'THEAD' && target.parentNode) {
+            target = target.parentNode
+        }
+        return target.tagName === 'THEAD'
     }
 
     static handleExcelData (values) {
@@ -384,15 +391,16 @@ export default class TableMergeCell {
             col: cellSpanProperty.colspan - 1 + this.indexStart.col,
         }
         const selectedCells = this.getSelectedCells()
-        selectedCells.forEach((ele, index) => {
+        selectedCells.forEach((cell, index) => {
             if (index === 0) {
-                ele.removeAttribute('rowspan')
-                ele.removeAttribute('colspan')
+                cell.removeAttribute('rowspan')
+                cell.removeAttribute('colspan')
             } else {
-                ele.style.display = 'table-cell'
+                cell.style.removeProperty('display')
             }
-            this.removeClass(ele)
+            this.removeClass(cell)
         })
+        
     }
 
     // 获取单元格行列索引
@@ -868,7 +876,7 @@ export default class TableMergeCell {
 
     mousedown = (e) => {
         let {target, button} = e
-        if (this.tableIsInTable(target) || button !== 0) return
+        if (this.tableIsInTable(target) || TableMergeCell.isTheadChild(target) || button !== 0) return
         target = TableMergeCell.getTargetParentCell(target)
         const {tagName} = target
         if (tagName === 'TD' || tagName === 'TH') {
@@ -1005,7 +1013,7 @@ export default class TableMergeCell {
 
     handlePaste (targetCells, resourceCells) {
         if (!Array.isArray(targetCells) || !Array.isArray(resourceCells)) {
-            throw new Errow('粘贴单元格或复制单元格不是数组')
+            throw new Error('粘贴单元格或复制单元格不是数组')
         }
         const tRowLen = targetCells.length
         const rRowLen = resourceCells.length

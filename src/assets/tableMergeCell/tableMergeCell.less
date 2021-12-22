@@ -1,17 +1,18 @@
 .tableMergeCell {
     table-layout: fixed;
     border-collapse: collapse;
+    table {
+        table-layout: fixed;
+    }
     th, td {
         position: relative;
         height: 30px;
-        /* 通过样式解决单元格子元素对事件的影响 */
-        /*p {
-            pointer-events: none;
-        }*/
+        @supports (-moz-perspective: 10px) {
+            background-clip: padding-box;
+        }
     }
     .tableMergeCell-selected {
         background-color: #e6efff;
-        // border: 1px dashed #4b89ff;
         &:before {
             content: '';
             position: absolute;
@@ -29,9 +30,6 @@
         bottom: 0;
         left: 0;
         opacity: 0;
-    }
-    table {
-        table-layout: fixed;
     }
 }
 

@@ -33,7 +33,7 @@ export const wangEditorTableExtend = {
                     if (!table.tableMergeCellInstance) {
                         table.tableMergeCellInstance = new TableMergeCell(table, {
                             onAddCol: () => {
-                                table.columnResizer.reset()
+                                table.tableColumnResizerInstance.reset()
                             },
                         })
                     }
@@ -83,12 +83,3 @@ export const wangEditorTableExtend = {
         }
     },
 }
-
-/*export const handleTable = (table) => {
-    console.log(table)
-    const wrap = document.createElement('div')
-    wrap.innerHTML = table.outerHTML
-    wrap.style.overflowX = 'auto'
-    const parentWrap = table.parentNode
-    parentWrap.replaceChild(wrap, table)
-}*/
