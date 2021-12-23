@@ -5,6 +5,7 @@ import 'ant-design-vue/lib/modal/style/css'
 const defaults = {
     btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
     onAddCol: null,             // 添加列完成后回调
+    onDelCol: null,             // 删除列完成后回调
 }
 
 export default class TableMergeCell {
@@ -140,7 +141,7 @@ export default class TableMergeCell {
         this.tableEle.classList.add(this.tableClassName)
         this.handleTableFromExcel()
         this.addFocusEle()
-        // this.addCellLocation()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -448,13 +449,15 @@ export default class TableMergeCell {
 
     // 获取单元格rowspan, colspan属性值
     getCellSpanProperty (cell) {
-        let rowspan = cell.getAttribute('rowspan')
-        let colspan = cell.getAttribute('colspan')
-        rowspan = rowspan ? rowspan * 1 : 1
-        colspan = colspan ? colspan * 1 : 1
-        return {
-            rowspan,
-            colspan,
+        if (cell) {
+            let rowspan = cell.getAttribute('rowspan')
+            let colspan = cell.getAttribute('colspan')
+            rowspan = rowspan ? rowspan * 1 : 1
+            colspan = colspan ? colspan * 1 : 1
+            return {
+                rowspan,
+                colspan,
+            }
         }
     }
 
@@ -546,12 +549,22 @@ export default class TableMergeCell {
             this.btn_textAlignRight.style.removeProperty('color')
             this.btn_addBackgroundColor.style.removeProperty('color')
             this.btn_delBackgroundColor.style.removeProperty('color')
+
+            this.btn_addRow.style.removeProperty('color')
+            this.btn_delRow.style.removeProperty('color')
+            this.btn_addCol.style.removeProperty('color')
+            this.btn_delCol.style.removeProperty('color')
         } else {
             this.btn_addBackgroundColor.style.color = btnDisabledColor
             this.btn_delBackgroundColor.style.color = btnDisabledColor
             this.btn_textAlignLeft.style.color = btnDisabledColor
             this.btn_textAlignCenter.style.color = btnDisabledColor
             this.btn_textAlignRight.style.color = btnDisabledColor
+
+            this.btn_addRow.style.color = btnDisabledColor
+            this.btn_delRow.style.color = btnDisabledColor
+            this.btn_addCol.style.color = btnDisabledColor
+            this.btn_delCol.style.color = btnDisabledColor
         }
     }
 
@@ -665,7 +678,7 @@ export default class TableMergeCell {
 
         this.syncMaxRowAndColCount()
 
-        onAddCol && onAddCol()
+        onAddCol && onAddCol(index)
     }
 
     // 删除行
@@ -734,6 +747,7 @@ export default class TableMergeCell {
 
     // 删除列
     delCol (index) {
+        const {onDelCol} = this.opts
         const {rows} = this
         const relatedCellsArray = this.getRelatedMergedColCells(index)
         relatedCellsArray.forEach(cell => {
@@ -749,6 +763,7 @@ export default class TableMergeCell {
         })
         this.delEmptyTable()
         this.syncMaxRowAndColCount()
+        onDelCol && onDelCol(index)
     }
 
     // 添加表头
@@ -876,6 +891,7 @@ export default class TableMergeCell {
 
     mousedown = (e) => {
         let {target, button} = e
+        if (!this.tableEle.contains(target)) return
         if (this.tableIsInTable(target) || TableMergeCell.isTheadChild(target) || button !== 0) return
         target = TableMergeCell.getTargetParentCell(target)
         const {tagName} = target
@@ -897,7 +913,7 @@ export default class TableMergeCell {
         }
         // 未点击表格时（且未点击右键菜单的添加背景色）移除高亮单元格
         const key = target.dataset.key
-        if (!this.tableEle.contains(target) && key !== 'addBackgroundColor') {
+        if (!this.tableEle.contains(target) && key !== 'addBackgroundColor' && !target.className.includes('tableMergeCell-contextmenu')) {
             this.removeClass()
         }
         // 移除背景色设置输入框
@@ -907,10 +923,11 @@ export default class TableMergeCell {
     }
 
     mousemove = (e) => {
-        if (this.ready) {
-            let {target} = e
+        let {target} = e
+        if (this.ready && this.tableEle.contains(target)) {
             target = TableMergeCell.getTargetParentCell(target)
-            if (!this.tableEle.contains(target)) return
+            const {rowspan, colspan} = this.getCellSpanProperty(target)
+            if (rowspan > 1 || colspan > 1) return
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
             this.removeClass()
@@ -924,6 +941,7 @@ export default class TableMergeCell {
 
     mouseup = (e) => {
         let {target, button} = e
+        if (!this.tableEle.contains(e.target)) return
         if (button === 0 && this.ready) {
             target = TableMergeCell.getTargetParentCell(target)
             this.cellEnd = target
@@ -992,6 +1010,7 @@ export default class TableMergeCell {
 
     copy = (e) => {
         e.preventDefault()
+        if (!this.tableEle.contains(e.target)) return
         let selectionStr = window.getSelection().toString()
         if (selectionStr) {
             if (e.clipboardData) {
@@ -1100,6 +1119,7 @@ export default class TableMergeCell {
     }
 
     paste = (e) => {
+        if (!this.tableEle.contains(e.target)) return
         const clipboardData = e.clipboardData || window.clipboardData
         const selectedCells = this.getSelectedCells(true)
         if (clipboardData.items.length > 1) {

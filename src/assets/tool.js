@@ -11,10 +11,20 @@ export const wangEditorTableExtend = {
             this.addPasteTableListener()
         })
     },
-    updated() {
+    /*updated() {
         this.$nextTick(() => {
             this.initTableInteraction()
         })
+    },*/
+    watch: {
+        value (newVal) {
+            if (newVal) {
+                if (!/<table.*><\/table>/gs.test(newVal)) return
+                this.$nextTick(() => {
+                    this.initTableInteraction()
+                })
+            }
+        }
     },
     methods: {
         initTableInteraction() {
@@ -32,8 +42,11 @@ export const wangEditorTableExtend = {
                 if (!tableIsInTable(table)) {
                     if (!table.tableMergeCellInstance) {
                         table.tableMergeCellInstance = new TableMergeCell(table, {
-                            onAddCol: () => {
-                                table.tableColumnResizerInstance.reset()
+                            onAddCol: (index) => {
+                                table.tableColumnResizerInstance.handleAddCol(index)
+                            },
+                            onDelCol: (index) => {
+                                table.tableColumnResizerInstance.handleDelCol(index)
                             },
                         })
                     }
@@ -48,7 +61,7 @@ export const wangEditorTableExtend = {
             this.insertText && this.insertText.addEventListener('click', this.initTableInteraction, false)
         },
         addInsertTableIconlistener() {
-            this.iconTable = this.$refs.editor.querySelector("[data-title='表格']")
+            this.iconTable = document.querySelector(".w-e-menu[data-title='表格']")
             this.iconTable && this.iconTable.addEventListener('click', this.addInsertTextListener, false)
         },
         handlePaste(event) {
@@ -65,9 +78,11 @@ export const wangEditorTableExtend = {
         this.tables && this.tables.forEach(table => {
             if (table.tableMergeCellInstance) {
                 table.tableMergeCellInstance.destroy()
+                table.tableMergeCellInstance = null
             }
             if (table.tableColumnResizerInstance) {
                 table.tableColumnResizerInstance.destroy()
+                table.tableColumnResizerInstance = null
             }
         })
         this.tables = null
@@ -82,4 +97,29 @@ export const wangEditorTableExtend = {
             this.$refs.editor.removeEventListener('paste', this.handlePaste, false)
         }
     },
+}
+
+export const handleBackendKnowledgeContentData = (res) => {
+    if (!res) return res
+    const {state, data} = res
+    if (state === 200 && data) {
+        const {rows} = data
+        if (!Array.isArray(rows)) return res
+        const len1 = rows.length
+        for (let i = 0; i < len1; i++) {
+            const row = rows[i]
+            const {subActivityPackageKnowledgeDirVos} = row
+            if (!Array.isArray(subActivityPackageKnowledgeDirVos)) continue
+            const len2 = subActivityPackageKnowledgeDirVos.length
+            for (let j = 0; j < len2; j++) {
+                const level2Data = subActivityPackageKnowledgeDirVos[j]
+                if (!level2Data) continue
+                const {knowledgeVo} = level2Data
+                if (!knowledgeVo) continue
+                const {knowledgeContent} = knowledgeVo
+                knowledgeVo.knowledgeContent = knowledgeContent.replace(/(<table.*?>)/gs, '<div class="tableMergeCell-tempContainer">$1').replace(/(<\/table>)/g, '$1</div>')
+            }
+        }
+    }
+    return res
 }

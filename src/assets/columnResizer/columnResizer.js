@@ -14,11 +14,15 @@ export default class ColumnResizer {
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
         this.tableEle = tableEle
+        this.colgroup = tableEle.querySelector('colgroup')
+        this.thead = tableEle.querySelector('thead')
         this.wangEditorEditableContainer = ColumnResizer.getTargetParentElement(tableEle, 'w-e-text')
         this.handshank = null
         this.handshankCls = 'tableMergeCell-handshank'
         this.subline = 'tableMergeCell-subline'
         this.handshankHover = 'tableMergeCell-handshank-hover'
+        this.tableDefaultWidth = 1000
+        this.average = 200
         this.init()
     }
 
@@ -27,10 +31,14 @@ export default class ColumnResizer {
         if (!this.tableEle || this.tableEle.ELEMENT_NODE !== 1 || this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
-        this.initTheadAndColgroup()
+        this.tableEle.removeAttribute('width')
         this.getDefaultWidth()
-        this.setWidth()
-        this.addResizeHandShank()
+        if (!this.tableEle.style.width) {
+            this.setTableWidth(this.tableDefaultWidth)
+        }
+        this.initTheadAndColgroup()
+        this.setColWidth()
+        this.handleResizeHandShank()
         this.addEvent()
     }
 
@@ -42,40 +50,68 @@ export default class ColumnResizer {
         const tbody = this.tableEle.tBodies[0]
         const {rows} = tbody
         const colCount = rows[0].childElementCount
-        const colgroup = document.createElement('colgroup')
-        for (let i = 0 ; i < colCount; i++) {
-            const col = document.createElement('col')
-            colgroup.appendChild(col)
+        if (!this.colgroup) {
+            const colgroup = document.createElement('colgroup')
+            for (let i = 0 ; i < colCount; i++) {
+                const col = document.createElement('col')
+                colgroup.appendChild(col)
+            }
+            this.colgroup = tbody.insertAdjacentElement('beforebegin', colgroup)
         }
-        this.colgroup = tbody.insertAdjacentElement('beforebegin', colgroup)
-
-        const thead = document.createElement('thead')
-        const tr = document.createElement('tr')
-        tr.className = 'tableMergeCell-handshank-container'
-        for (let i = 0 ; i < colCount; i++) {
-            const th = document.createElement('th')
-            tr.appendChild(th)
+        if (!this.thead) {
+            const thead = document.createElement('thead')
+            const tr = document.createElement('tr')
+            tr.className = 'tableMergeCell-handshank-container'
+            for (let i = 0 ; i < colCount; i++) {
+                const th = document.createElement('th')
+                tr.appendChild(th)
+            }
+            thead.appendChild(tr)
+            this.thead = tbody.insertAdjacentElement('beforebegin', thead)
         }
-        thead.appendChild(tr)
-        this.thead = tbody.insertAdjacentElement('beforebegin', thead)
     }
 
     // 获取表格与列宽默认值
     getDefaultWidth () {
-        const {width} = this.tableEle.getBoundingClientRect()
+        const width = this.wangEditorEditableContainer.clientWidth - 20
         const {rows} = this.tableEle.tBodies[0]
         const colCount = rows[0].childElementCount
         this.average = (width / colCount).toFixed()
+        this.tableDefaultWidth = this.average * colCount
     }
 
-    // 重置相关内容
-    reset = () => {
-        this.addResizeHandShank()
-        this.setWidth()
+    // 添加一个默认列
+    addOneCol (index) {
+        const cols = this.colgroup.children
+        const ths = this.thead.children[0].children
+        const col = document.createElement('col')
+        const th = document.createElement('th')
+        col.style.width = `${this.average}px`
+        cols[index].insertAdjacentElement('beforebegin', col)
+        ths[index].insertAdjacentElement('beforebegin', th)
+    }
+
+    // 增加列
+    handleAddCol = (index) => {
+        this.addOneCol(index)
+        this.handleResizeHandShank()
+        const colsWidth = this.getColsWidth()
+        this.setTableWidth(colsWidth)
+    }
+
+    // 删除列
+    handleDelCol (index) {
+        const cols = this.colgroup.children
+        const ths = this.thead.children[0].children
+        cols[index].remove()
+        ths[index].remove()
+        this.handleResizeHandShank()
+        const colsWidth = this.getColsWidth()
+        this.setTableWidth(colsWidth)
     }
 
     // 初始化默认宽
-    setWidth () {
+    setColWidth () {
         const {children} = this.colgroup
         children.forEach(col => {
             const width = col.style.width
@@ -83,11 +119,10 @@ export default class ColumnResizer {
                 col.style.width = `${this.average}px`
             } 
         })
-        this.setTableWidth(this.average * children.length)
     }
 
     // 增加列调整手柄
-    addResizeHandShank () {
+    handleResizeHandShank () {
         const cells = this.thead.children[0].children
         cells.forEach((cell, index) => {
             const handshank = cell.querySelector(`.${this.handshankCls}`)
@@ -102,18 +137,13 @@ export default class ColumnResizer {
         this.handshank.classList.add(this.subline)
     }
 
-    // 移除辅助线
-    removeSubline () {
-        this.handshank.classList.remove(this.subline)
-    }
-
     // 设置表格宽
     setTableWidth (width) {
         if (typeof width !== 'number') {
             throw new Error('表格宽的参数为Number类型！')
         }
         width = width.toFixed()
-        this.tableEle.setAttribute('width', `${width}px`)
+        this.tableEle.style.width = `${width}px`
     }
 
     // 获取列宽和
@@ -130,7 +160,7 @@ export default class ColumnResizer {
 
     mousedown = (e) => {
         const {target, button, clientX} = e
-        if (button === 0 && target.className.includes(this.handshankCls)) {
+        if (this.tableEle.contains(target) && button === 0 && target.className.includes(this.handshankCls)) {
             this.handshank = target
             this.handshank.classList.add(this.handshankHover)
             this.clientX = clientX
@@ -154,19 +184,20 @@ export default class ColumnResizer {
             const {clientX} = e
             const index = this.handshank.dataset.col
             const currentCol = this.colgroup.children[index]
-            const {width} = currentCol.getBoundingClientRect()
-            const calcWidth = width + this.diff
-            const {colMinWidth} = this.opts
-            const newWidth = Math.max(colMinWidth, calcWidth)
-            if (this.tableEle.contains(this.handshank) && clientX - this.clientX !== 0) {
-                currentCol.style.width = `${newWidth}px`
+            if (currentCol) {
+                const {width} = currentCol.getBoundingClientRect()
+                const calcWidth = width + this.diff
+                const {colMinWidth} = this.opts
+                const newWidth = Math.max(colMinWidth, calcWidth)
+                if (this.tableEle.contains(this.handshank) && clientX - this.clientX !== 0) {
+                    currentCol.style.width = `${newWidth}px`
+                }
             }
-            this.handshank.style.transform = 'none'
-            this.handshank.classList.remove(this.handshankHover)
-            this.removeSubline()
+            this.handshank.style.removeProperty('transform')
+            this.handshank.classList.remove(this.handshankHover, this.subline)
+            this.handshank = null
             const colsWidth = this.getColsWidth()
             this.setTableWidth(colsWidth)
-            this.handshank = null
         }
     } 
 

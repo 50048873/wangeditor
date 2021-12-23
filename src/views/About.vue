@@ -1,7 +1,7 @@
 <template>
     <div>
         <div ref="editor">
-            <div v-html="backendHTML"></div>
+            <div v-html="value"></div>
         </div>
         <button type="button" id="btn1" @click="getHtml">获取html</button>
         <button type="button" id="btn2" @click="setHtml">设置html</button>
@@ -17,12 +17,12 @@ export default {
     mixins: [wangEditorTableExtend],
     data () {
         return {
-            backendHTML: '',
+            value: '',
         }
     },
     /*created () {
         setTimeout(() => {
-            this.backendHTML = '<table border="0" width="1882.953125px" cellpadding="0" cellspacing="0" class="tableMergeCell"><tbody><tr><th style="width: 376.4px;" class="tableMergeCell-selected">0-0 <i data-col="0" contenteditable="false" class="tableMergeCell-handshank"></i></th><th style="width: 376.4px;">0-1 <i data-col="1" contenteditable="false" class="tableMergeCell-handshank"></i></th><th style="width: 376.4px;">0-2 <i data-col="2" contenteditable="false" class="tableMergeCell-handshank"></i></th><th style="width: 376.4px;">0-3 <i data-col="3" contenteditable="false" class="tableMergeCell-handshank"></i></th><th style="width: 376.4px;">0-4 <i data-col="4" contenteditable="false" class="tableMergeCell-handshank"></i></th></tr><tr><td rowspan="2" colspan="1">1-0</td><td>这是一段中玉设计院内容</td><td>1-2</td><td>1-3</td><td>1-4</td></tr><tr><td style="display: none;">2-0</td><td style="background-color: rgb(242, 151, 151);">2-1</td><td style="background-color: rgb(242, 151, 151);">2-2</td><td>2-3</td><td>2-4</td></tr><tr><td>3-0</td><td style="background-color: rgb(242, 151, 151);">3-1</td><td style="background-color: rgb(242, 151, 151);">3-2</td><td>3-3</td><td>3-4</td></tr><tr><td>4-0</td><td>4-1</td><td>4-2</td><td>4-3</td><td>4-4</td></tr></tbody></table>'
+            this.value = '<div></div><table border="0" width="1900px" cellpadding="0" cellspacing="0" class="tableMergeCell"><colgroup><col style="width: 380px;"><col style="width: 380px;"><col style="width: 380px;"><col style="width: 380px;"><col style="width: 380px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank"></i></th></tr></thead><tbody><tr><th></th><th></th><th></th><th></th><th></th></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><table border="0" width="1880px" cellpadding="0" cellspacing="0" class="tableMergeCell"><colgroup><col style="width: 376px;"><col style="width: 376px;"><col style="width: 376px;"><col style="width: 376px;"><col style="width: 376px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank"></i></th></tr></thead><tbody><tr><th></th><th></th><th></th><th></th><th></th></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>'
         }, 2000)
     },*/
     mounted() {
