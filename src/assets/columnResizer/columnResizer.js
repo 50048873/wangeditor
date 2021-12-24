@@ -46,6 +46,7 @@ export default class ColumnResizer {
         this.removeEvent()
     }
 
+    // 初始化thead和colgroup
     initTheadAndColgroup () {
         const tbody = this.tableEle.tBodies[0]
         const {rows} = tbody
@@ -201,6 +202,7 @@ export default class ColumnResizer {
         }
     } 
 
+    // 同步列控制手柄高度
     input = () => {
         const tbody = this.tableEle.tBodies[0]
         const row0 = tbody.rows[0]

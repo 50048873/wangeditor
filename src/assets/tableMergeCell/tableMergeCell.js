@@ -9,8 +9,6 @@ const defaults = {
 }
 
 export default class TableMergeCell {
-    static focusEle = null
-
     // 二维数组
     static copyedCellsArray = []
 
@@ -140,7 +138,6 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.handleTableFromExcel()
-        this.addFocusEle()
         this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
@@ -153,7 +150,6 @@ export default class TableMergeCell {
             this.menuEle.removeEventListener('click', this.menuClick, false)
             this.menuEle.remove()
         }
-        TableMergeCell.focusEle && TableMergeCell.focusEle.remove()
     }
 
     // 补齐从excel复制粘贴过来的表格单元格
@@ -184,15 +180,6 @@ export default class TableMergeCell {
                     }
                 }
             }
-        }
-    }
-
-    // 创建焦点元素
-    addFocusEle () {
-        if (!TableMergeCell.focusEle) {
-            TableMergeCell.focusEle = document.createElement('button')
-            TableMergeCell.focusEle.className = 'tableMergeCell-focusEle'
-            document.body.appendChild(TableMergeCell.focusEle)
         }
     }
 
@@ -947,9 +934,6 @@ export default class TableMergeCell {
             this.cellEnd = target
             this.indexEnd = this.getCellIndex(target)
             this.ready = false
-            if (this.cellStart !== this.cellEnd) {
-                TableMergeCell.focusEle && TableMergeCell.focusEle.focus()
-            }
         }
     }
 
@@ -1010,7 +994,6 @@ export default class TableMergeCell {
 
     copy = (e) => {
         e.preventDefault()
-        if (!this.tableEle.contains(e.target)) return
         let selectionStr = window.getSelection().toString()
         if (selectionStr) {
             if (e.clipboardData) {
@@ -1119,11 +1102,11 @@ export default class TableMergeCell {
     }
 
     paste = (e) => {
-        if (!this.tableEle.contains(e.target)) return
-        const clipboardData = e.clipboardData || window.clipboardData
         const selectedCells = this.getSelectedCells(true)
+        const clipboardData = e.clipboardData || window.clipboardData
         if (clipboardData.items.length > 1) {
             e.preventDefault()
+            e.stopPropagation()
             const data = clipboardData.getData('text')
             const excelData = TableMergeCell.handleExcelData(data)
             this.handlePaste(selectedCells, excelData)
@@ -1152,8 +1135,8 @@ export default class TableMergeCell {
         window.addEventListener('mouseup', this.mouseup, false)
         this.tableEle.addEventListener('click', this.tableClick, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
-        window.addEventListener('copy', this.copy, false)
-        window.addEventListener('paste', this.paste, false)
+        this.tableEle.addEventListener('copy', this.copy, false)
+        this.tableEle.addEventListener('paste', this.paste, false)
         window.addEventListener('keydown', this.keydown, true)
     }
 
@@ -1164,8 +1147,8 @@ export default class TableMergeCell {
         window.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('click', this.tableClick, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
-        window.removeEventListener('copy', this.copy, false)
-        window.removeEventListener('paste', this.paste, false)
+        this.tableEle.removeEventListener('copy', this.copy, false)
+        this.tableEle.removeEventListener('paste', this.paste, false)
         window.removeEventListener('keydown', this.keydown, true)
     }
 }
