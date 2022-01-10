@@ -13,6 +13,7 @@ export default class ColumnResizer {
 
     constructor (tableEle, options = {}) {
         this.opts = Object.assign({}, defaults, options)
+        this.isExcelTable = false
         this.tableEle = tableEle
         this.colgroup = tableEle.querySelector('colgroup')
         this.thead = tableEle.querySelector('thead')
@@ -21,7 +22,6 @@ export default class ColumnResizer {
         this.handshankCls = 'tableMergeCell-handshank'
         this.subline = 'tableMergeCell-subline'
         this.handshankHover = 'tableMergeCell-handshank-hover'
-        this.tableDefaultWidth = 1000
         this.average = 200
         this.init()
     }
@@ -31,19 +31,67 @@ export default class ColumnResizer {
         if (!this.tableEle || this.tableEle.ELEMENT_NODE !== 1 || this.tableEle.tagName !== 'TABLE') {
             throw new Error('请传入table元素！')
         }
-        this.tableEle.removeAttribute('width')
-        this.getDefaultWidth()
-        if (!this.tableEle.style.width) {
-            this.setTableWidth(this.tableDefaultWidth)
-        }
+        this.initTable()
+        this.handleExcelTable()
+        this.handleTableWidth()
         this.initTheadAndColgroup()
         this.setColWidth()
         this.handleResizeHandShank()
         this.addEvent()
     }
 
+    initTable () {
+        this.tableEle.removeAttribute('width')
+        const parentNode = this.tableEle.parentNode
+        if (parentNode && parentNode.className.includes('tableMergeCell-tempContainer')) {
+            parentNode.insertAdjacentElement('beforebegin', this.tableEle)
+        }
+        const nextElementSibling = this.tableEle.nextElementSibling
+        if (nextElementSibling && nextElementSibling.className && nextElementSibling.className.includes('tableMergeCell-tempContainer')) {
+            nextElementSibling.remove()
+        }
+    }
+
     destroy () {
         this.removeEvent()
+    }
+
+    handleExcelTable () {
+        const cellpadding = this.tableEle.getAttribute('cellpadding')
+        if (!cellpadding) {
+            this.colgroup.remove()
+            this.colgroup = null
+            this.isExcelTable = true
+            this.tableEle.setAttribute('cellpadding', 0)
+            this.triggerFirstCellHeight()
+        }
+    }
+
+    triggerFirstCellHeight () {
+        setTimeout(() => {
+            const evt = new CustomEvent('input', {
+                bubbles: true,
+                cancelable: false,
+            })
+            this.tableEle.dispatchEvent(evt)
+        }, 1000)
+    }
+
+    handleTableWidth () {
+        const width = this.wangEditorEditableContainer.clientWidth - 20
+        const {rows} = this.tableEle.tBodies[0]
+        const colCount = rows[0].childElementCount
+        this.average = (width / colCount).toFixed()
+
+        if (!this.tableEle.style.width) {
+            let width = 500
+            if (this.isExcelTable) {
+                width = this.tableEle.getBoundingClientRect().width
+            } else {
+                width = this.average * colCount
+            }
+            this.setTableWidth(width)
+        }
     }
 
     // 初始化thead和colgroup
@@ -72,13 +120,32 @@ export default class ColumnResizer {
         }
     }
 
-    // 获取表格与列宽默认值
-    getDefaultWidth () {
-        const width = this.wangEditorEditableContainer.clientWidth - 20
-        const {rows} = this.tableEle.tBodies[0]
-        const colCount = rows[0].childElementCount
-        this.average = (width / colCount).toFixed()
-        this.tableDefaultWidth = this.average * colCount
+    // 初始化默认宽
+    setColWidth () {
+        const {children} = this.colgroup
+        const {colMinWidth} = this.opts
+        children.forEach(col => {
+            const width = col.style.width
+            if (!width) {
+                if (this.isExcelTable) {
+                    const width = Math.max(col.getBoundingClientRect().width, colMinWidth * 2)
+                    col.style.width = `${Math.round(width)}px`
+                } else {
+                    col.style.width = `${this.average}px`
+                }
+            } 
+        })
+    }
+
+    // 增加列调整手柄
+    handleResizeHandShank () {
+        const cells = this.thead.children[0].children
+        cells.forEach((cell, index) => {
+            const handshank = cell.querySelector(`.${this.handshankCls}`)
+            handshank && handshank.remove()
+            const i = `<i data-col="${index}" contenteditable="false" class="${this.handshankCls}"></i>`
+            cell.insertAdjacentHTML('beforeend', i)
+        })
     }
 
     // 添加一个默认列
@@ -111,28 +178,6 @@ export default class ColumnResizer {
         this.setTableWidth(colsWidth)
     }
 
-    // 初始化默认宽
-    setColWidth () {
-        const {children} = this.colgroup
-        children.forEach(col => {
-            const width = col.style.width
-            if (!width) {
-                col.style.width = `${this.average}px`
-            } 
-        })
-    }
-
-    // 增加列调整手柄
-    handleResizeHandShank () {
-        const cells = this.thead.children[0].children
-        cells.forEach((cell, index) => {
-            const handshank = cell.querySelector(`.${this.handshankCls}`)
-            handshank && handshank.remove()
-            const i = `<i data-col="${index}" contenteditable="false" class="${this.handshankCls}"></i>`
-            cell.insertAdjacentHTML('beforeend', i)
-        })
-    }
-
     // 增加辅助线
     addSubline () {
         this.handshank.classList.add(this.subline)
@@ -151,7 +196,8 @@ export default class ColumnResizer {
     getColsWidth () {
         const {children} = this.colgroup
         const arr = Array.from(children).map(col => {
-            return Number.parseFloat(col.style.width)
+            const width = col.style.width
+            return Number.parseInt(width)
         })
         const width = arr.reduce((acc, cur) => {
             return acc + cur
@@ -186,7 +232,7 @@ export default class ColumnResizer {
             const index = this.handshank.dataset.col
             const currentCol = this.colgroup.children[index]
             if (currentCol) {
-                const {width} = currentCol.getBoundingClientRect()
+                const width = Number.parseInt(currentCol.style.width)
                 const calcWidth = width + this.diff
                 const {colMinWidth} = this.opts
                 const newWidth = Math.max(colMinWidth, calcWidth)

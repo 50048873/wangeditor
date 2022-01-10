@@ -6,6 +6,7 @@ const defaults = {
     btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
     onAddCol: null,             // 添加列完成后回调
     onDelCol: null,             // 删除列完成后回调
+    imgMinWidth: 20,            // 图片最小宽
 }
 
 export default class TableMergeCell {
@@ -138,7 +139,7 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.handleTableFromExcel()
-        this.addCellLocation()
+        // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -436,15 +437,13 @@ export default class TableMergeCell {
 
     // 获取单元格rowspan, colspan属性值
     getCellSpanProperty (cell) {
-        if (cell) {
-            let rowspan = cell.getAttribute('rowspan')
-            let colspan = cell.getAttribute('colspan')
-            rowspan = rowspan ? rowspan * 1 : 1
-            colspan = colspan ? colspan * 1 : 1
-            return {
-                rowspan,
-                colspan,
-            }
+        let rowspan = cell.getAttribute('rowspan')
+        let colspan = cell.getAttribute('colspan')
+        rowspan = rowspan ? rowspan * 1 : 1
+        colspan = colspan ? colspan * 1 : 1
+        return {
+            rowspan,
+            colspan,
         }
     }
 
@@ -878,7 +877,7 @@ export default class TableMergeCell {
 
     mousedown = (e) => {
         let {target, button} = e
-        if (!this.tableEle.contains(target)) return
+        if ((this.imgMasklayer && this.imgMasklayer.contains(target)) || target.tagName === 'IMG') return
         if (this.tableIsInTable(target) || TableMergeCell.isTheadChild(target) || button !== 0) return
         target = TableMergeCell.getTargetParentCell(target)
         const {tagName} = target
@@ -900,53 +899,72 @@ export default class TableMergeCell {
         }
         // 未点击表格时（且未点击右键菜单的添加背景色）移除高亮单元格
         const key = target.dataset.key
-        if (!this.tableEle.contains(target) && key !== 'addBackgroundColor' && !target.className.includes('tableMergeCell-contextmenu')) {
+        if (target && !this.tableEle.contains(target) && key !== 'addBackgroundColor' && !target.className.includes('tableMergeCell-contextmenu')) {
             this.removeClass()
         }
         // 移除背景色设置输入框
         if (this.colorPicker) {
             this.colorPicker.remove()
         }
+        if (this.imgMasklayer && !this.imgMasklayer.contains(target)) {
+            this.imgMasklayer.removeEventListener('click', this.handleImgBtn, false)
+            this.imgMasklayer.removeEventListener('keydown', this.handleImgEnter, false)
+            this.imgMasklayer.insertAdjacentElement('beforebegin', this.selectedImg)
+            this.imgMasklayer.remove()
+        }
     }
 
     mousemove = (e) => {
         let {target} = e
+        target = TableMergeCell.getTargetParentCell(target)
         if (this.ready && this.tableEle.contains(target)) {
-            target = TableMergeCell.getTargetParentCell(target)
-            const {rowspan, colspan} = this.getCellSpanProperty(target)
-            if (rowspan > 1 || colspan > 1) return
-            this.cellEnd = target
-            this.indexEnd = this.getCellIndex(target)
-            this.removeClass()
-            this.highlightSelectedCells()
-            const selection = window.getSelection()
-            if (this.cellStart !== this.cellEnd) {
-                selection.collapseToEnd()
-            }
+            clearTimeout(this.timer)
+            this.timer = setTimeout(() => {
+                const {rowspan, colspan} = this.getCellSpanProperty(target)
+                if (rowspan > 1 || colspan > 1) return
+                this.cellEnd = target
+                this.indexEnd = this.getCellIndex(target)
+                this.removeClass()
+                this.highlightSelectedCells()
+                const selection = window.getSelection()
+                if (this.cellStart !== this.cellEnd) {
+                    selection.collapseToEnd()
+                }
+            }, 1000 / 60)
         }
     }
 
     mouseup = (e) => {
         let {target, button} = e
-        if (!this.tableEle.contains(e.target)) return
         if (button === 0 && this.ready) {
             target = TableMergeCell.getTargetParentCell(target)
-            this.cellEnd = target
-            this.indexEnd = this.getCellIndex(target)
+            if (this.tableEle.contains(target)) {
+                this.cellEnd = target
+                this.indexEnd = this.getCellIndex(target)
+            }
             this.ready = false
         }
     }
 
     tableClick = (e) => {
         const {target, button} = e
-        if (button === 0 && target.tagName !== 'INPUT' && this.tableEle.contains(target)) {
+        const {tagName} = target
+        if (button === 0 && this.tableEle.contains(target)) {
             e.stopPropagation()
+        }
+        if (tagName === 'A') {
+            const href = target.getAttribute('href')
+            window.open(href)
+        }
+        if (tagName === 'IMG') {
+            this.handleImg(target)
         }
     }
 
     contextmenu = (e) => {
-        e.preventDefault()
         const {target, clientX, clientY} = e
+        if (target.tagName === 'IMG') return
+        e.preventDefault()
         if (this.tableIsInTable(target)) return
         if (!this.menuEle) {
             this.menuEle = document.createElement('ul')
@@ -1104,7 +1122,7 @@ export default class TableMergeCell {
     paste = (e) => {
         const selectedCells = this.getSelectedCells(true)
         const clipboardData = e.clipboardData || window.clipboardData
-        if (clipboardData.items.length > 1) {
+        if (clipboardData.items.length > 2) {
             e.preventDefault()
             e.stopPropagation()
             const data = clipboardData.getData('text')
@@ -1128,27 +1146,113 @@ export default class TableMergeCell {
         }
     }
 
+    handleImg (target) {
+        this.selectedImg = target
+        // this.selectedImg.style.removeProperty('max-width')
+        const {width, height} = this.selectedImg.getBoundingClientRect()
+        this.imgOriginWidth = width
+        this.selectedImg.insertAdjacentHTML('beforebegin', `
+            <div contenteditable="false" class="tableMergeCell-imgTooltip" style="width: ${width}px; height: ${height}px;">
+                <span class="tableMergeCell-imgInputWrap">
+                    <input value="${width}px" class="tableMergeCell-imgInput" title="调整图片至特定宽度">
+                    <button type="button" class="tableMergeCell-imgBtn">确定</button>
+                </span>
+            </div>`
+        )
+        this.imgMasklayer = this.tableEle.querySelector('.tableMergeCell-imgTooltip')
+        this.imgMasklayer.insertAdjacentElement('afterbegin', this.selectedImg)
+        if (this.imgMasklayer) {
+            this.imgMasklayer.addEventListener('click', this.handleImgBtn, false)
+            this.imgMasklayer.addEventListener('keydown', this.handleImgEnter, false)
+        }
+    }
+
+    handleImgEnter = (e) => {
+        const {key, target} = e
+        if (key === 'Enter' && target.className.includes('tableMergeCell-imgInput')) {
+            this.handleImgWidth(target)
+        }
+    }
+
+    handleImgBtn = (e) => {
+        const {target} = e
+        if (target.className.includes('tableMergeCell-imgBtn')) {
+            const preElement = target.previousElementSibling
+            this.handleImgWidth(preElement)
+        }
+    }
+
+    handleImgWidth (inputEle) {
+        const value = inputEle.value
+        const {imgMinWidth} = this.opts
+        let newWidth
+        if (/^\d+/.test(value)) {
+            newWidth = Number.parseInt(value)
+        } else {
+            inputEle.value = `${this.imgOriginWidth}px`
+        }
+        if (newWidth < imgMinWidth) {
+            Modal && Modal.confirm({
+                title: '提示',
+                content: `图片最小宽为${imgMinWidth}像素！`,
+                zIndex: 10009,
+            })
+            return
+        }
+        const getTargetParentCell = (target) => {
+            while (target.tagName !== 'TD' && target.parentNode) {
+                target = target.parentNode
+            }
+            return target
+        }
+        const td = getTargetParentCell(this.imgMasklayer)
+        if (td && td.tagName === 'TD') {
+            const {width, paddingRight, paddingLeft, borderRightWidth} = window.getComputedStyle(td)
+            const maxW = Number.parseFloat(width) - Number.parseFloat(paddingRight) - Number.parseFloat(paddingLeft) - Number.parseFloat(borderRightWidth)
+            if (newWidth > maxW) {
+                Modal && Modal.confirm({
+                    title: '提示',
+                    content: '图片的宽不能超过单元格的宽，请先调整列宽到合适的宽度！',
+                    zIndex: 10009,
+                })
+                return
+            }
+        }
+        if (typeof newWidth === 'number' && newWidth !== this.imgOriginWidth) {
+            this.selectedImg.style.width = `${newWidth}px`
+            const {width, height} = this.selectedImg.getBoundingClientRect()
+            this.imgMasklayer.style.width = `${width}px`
+            this.imgMasklayer.style.height = `${height}px`
+        }
+        if (this.imgMasklayer) {
+            this.imgMasklayer.removeEventListener('click', this.handleImgBtn, false)
+            this.imgMasklayer.removeEventListener('keydown', this.handleImgEnter, false)
+            this.imgMasklayer.insertAdjacentElement('beforebegin', this.selectedImg)
+            this.imgMasklayer.remove()
+        }
+    }
+
     addEvent () {
-        window.addEventListener('mousedown', this.mousedown, false)
-        window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
+        this.tableEle.addEventListener('mousedown', this.mousedown, false)
         window.addEventListener('mousemove', this.mousemove, false)
         window.addEventListener('mouseup', this.mouseup, false)
         this.tableEle.addEventListener('click', this.tableClick, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
         this.tableEle.addEventListener('copy', this.copy, false)
         this.tableEle.addEventListener('paste', this.paste, false)
+        window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, true)
         window.addEventListener('keydown', this.keydown, true)
     }
 
     removeEvent () {
-        window.removeEventListener('mousedown', this.mousedown, false)
-        window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, false)
+        this.tableEle.removeEventListener('mousedown', this.mousedown, false)
         window.removeEventListener('mousemove', this.mousemove, false)
         window.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('click', this.tableClick, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
         this.tableEle.removeEventListener('copy', this.copy, false)
         this.tableEle.removeEventListener('paste', this.paste, false)
+        window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, true)
         window.removeEventListener('keydown', this.keydown, true)
     }
 }

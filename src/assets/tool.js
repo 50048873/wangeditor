@@ -9,15 +9,11 @@ export const wangEditorTableExtend = {
         this.$nextTick(() => {
             this.addInsertTableIconlistener()
             this.addPasteTableListener()
+            window.addEventListener('keydown', this.tableObserve, true)
         })
     },
-    /*updated() {
-        this.$nextTick(() => {
-            this.initTableInteraction()
-        })
-    },*/
     watch: {
-        value (newVal) {
+        value(newVal) {
             if (newVal) {
                 if (!/<table.*><\/table>/gs.test(newVal)) return
                 this.$nextTick(() => {
@@ -73,6 +69,23 @@ export const wangEditorTableExtend = {
         addPasteTableListener() {
             this.$refs.editor.addEventListener('paste', this.handlePaste, false)
         },
+        tableObserve() {
+            const callback = (mutationsList) => {
+                for (const mutation of mutationsList) {
+                    const { target, addedNodes } = mutation
+                    const [addedNode] = addedNodes
+                    if (target.className.includes('w-e-text') && addedNode && addedNode.tagName === 'TABLE') {
+                        this.initTableInteraction()
+                    }
+                }
+            }
+            const observer = new MutationObserver(callback)
+            const ele = this.$refs.editor.querySelector('.w-e-text[contenteditable="true"]')
+            observer.observe(ele, {
+                childList: true,
+                subtree: true,
+            })
+        },
     },
     beforeDestroy() {
         this.tables && this.tables.forEach(table => {
@@ -96,28 +109,83 @@ export const wangEditorTableExtend = {
         if (this.$refs.editor) {
             this.$refs.editor.removeEventListener('paste', this.handlePaste, false)
         }
+        window.removeEventListener('keydown', this.tableObserve, true)
     },
 }
 
-export const handleBackendKnowledgeContentData = (res) => {
+const handleKnowledgeContent = (str) => {
+    return str.replace(/(<table.*?>)/gs, '<div class="tableMergeCell-tempContainer">$1').replace(/(<\/table>)/g, '$1</div>')
+}
+
+export const handleData_getKnowledgePageByActPackId = (res) => {
     if (!res) return res
-    const {state, data} = res
+    const { state, data } = res
     if (state === 200 && data) {
-        const {rows} = data
+        const { rows } = data
         if (!Array.isArray(rows)) return res
         const len1 = rows.length
         for (let i = 0; i < len1; i++) {
             const row = rows[i]
-            const {subActivityPackageKnowledgeDirVos} = row
+            const { subActivityPackageKnowledgeDirVos } = row
             if (!Array.isArray(subActivityPackageKnowledgeDirVos)) continue
             const len2 = subActivityPackageKnowledgeDirVos.length
             for (let j = 0; j < len2; j++) {
                 const level2Data = subActivityPackageKnowledgeDirVos[j]
                 if (!level2Data) continue
-                const {knowledgeVo} = level2Data
+                const { knowledgeVo } = level2Data
                 if (!knowledgeVo) continue
-                const {knowledgeContent} = knowledgeVo
-                knowledgeVo.knowledgeContent = knowledgeContent.replace(/(<table.*?>)/gs, '<div class="tableMergeCell-tempContainer">$1').replace(/(<\/table>)/g, '$1</div>')
+                const { knowledgeContent } = knowledgeVo
+                if (knowledgeContent) {
+                    knowledgeVo.knowledgeContent = handleKnowledgeContent(knowledgeContent)
+                }
+            }
+        }
+    }
+    return res
+}
+
+export const handleData_getKnowledgeById = (res) => {
+    if (!res) return res
+    const { state, data } = res
+    if (state === 200 && data) {
+        const { knowledgeContent } = data
+        if (knowledgeContent) {
+            data.knowledgeContent = handleKnowledgeContent(knowledgeContent)
+        }
+    }
+    return res
+}
+
+export const handleData_showList = (res) => {
+    if (!res) return res
+    const { code, rows } = res
+    if (code === 200) {
+        if (!Array.isArray(rows)) return res
+        const len1 = rows.length
+        for (let i = 0; i < len1; i++) {
+            const row = rows[i]
+            const { logContent } = row
+            if (logContent) {
+                row.logContent = handleKnowledgeContent(logContent)
+            }
+        }
+    }
+    return res
+}
+
+export const handleData_taskDetail = (res) => {
+    if (!res) return res
+    const { state, data } = res
+    if (state === 200 && data) {
+        const { knowledgeList } = data
+        if (Array.isArray(knowledgeList)) {
+            const len = knowledgeList.length
+            for (let i = 0; i < len; i++) {
+                const item = knowledgeList[i]
+                const { name } = item
+                if (name) {
+                    item.name = handleKnowledgeContent(name)
+                }
             }
         }
     }
