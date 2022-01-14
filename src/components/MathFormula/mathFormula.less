@@ -1,0 +1,53 @@
+﻿.mathFormula {
+    margin-top: 15px;
+
+    ul {
+        list-style: none;
+        padding: 0 0 0 15px;
+        margin: 0 0 1em 0;
+    }
+
+    .tabMenu {
+        border: solid #E1E6E6 1px;
+
+        .tabTitle {
+            display: flex;
+            background: url(bg.jpg);
+
+            li {
+                padding: 2px;
+                margin-top: 5px;
+                padding-bottom: 7px;
+                width: 80px;
+                text-align: center;
+                line-height: 16px;
+                cursor: pointer;
+
+                &.current {
+                    background-color: white;
+                    border-top: solid #E1E6E6 1px;
+                    border-left: solid #E1E6E6 1px;
+                    border-right: solid #E1E6E6 1px;
+                }
+            }
+        }
+
+        .tabContent {
+            display: flex;
+            flex-wrap: wrap;
+
+            li {
+                flex-basis: 30px;
+                flex-shrink: 0;
+                height: 30px;
+                margin: 5px;
+                background-image: url(math.png);
+                background-repeat: no-repeat;
+            }
+        }
+    }
+
+    .mathDiv {
+        margin-top: 15px;
+    }
+}

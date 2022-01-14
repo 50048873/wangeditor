@@ -236,7 +236,9 @@ export default class TableMergeCell {
         this.colorPicker.selectedCells = selectedCells
         const selectedLastEle = selectedCells[selectedCells.length - 1]
         selectedLastEle.appendChild(this.colorPicker)
-        this.colorPicker.click()
+        setTimeout(() => {
+            this.colorPicker.click()
+        }, 20)
     }
 
     // 删除背景色

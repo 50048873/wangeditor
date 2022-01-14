@@ -1,0 +1,12 @@
+.mathquill-rendered-math {
+    font-size: 20px!important;
+}
+.mathquill-rendered-math * {
+    box-sizing: content-box!important;
+}
+.mathquill-rendered-math sup {
+    top: auto!important;
+}
+.mathquill-rendered-math sub {
+    bottom: auto!important;
+}

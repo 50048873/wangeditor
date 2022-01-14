@@ -3,16 +3,21 @@
         <div ref="editor">
             <div v-html="value"></div>
         </div>
-        <button type="button" id="btn1" @click="getHtml">获取html</button>
+       <!--  <button type="button" id="btn1" @click="getHtml">获取html</button>
         <button type="button" id="btn2" @click="setHtml">设置html</button>
-        <div ref="newHtml" class="newHtml"></div>
-        <formula-pop :visible.sync="visible" @ok="ok" />
-        <div v-html="math" @click="editMath"></div>
+        <div ref="newHtml" class="newHtml"></div> -->
+        <formula-pop 
+            :visible.sync="visible" 
+            :type='type'
+            :latex="latex"
+            @confirm="confirm" 
+        />
+        <div @click="editMath">\sqrt{2}</div>
     </div>
 </template>
 <script>
 /* eslint-disable */
-import FormulaPop from '@/components/FormulaPop'
+import FormulaPop from '@/components/FormulaPop2'
 import E from 'wangeditor'
 import { wangEditorTableExtend } from '@/assets/tool'
 import { FormulaMenu } from '@/assets/wangEditorMenuExtention'
@@ -20,14 +25,14 @@ export default {
     name: 'about',
     mixins: [wangEditorTableExtend],
     components: {
-        FormulaPop
+        FormulaPop,
     },
     data () {
         return {
             value: '',
             visible: false,
-            math: '',
-            values: {},
+            latex: '',
+            type: 'add',
         }
     },
     /*created () {
@@ -40,22 +45,23 @@ export default {
         this.listenMenuClick()
     },
     beforeDestroy () {
-        window.removeEventListener('addFormula', this.showFormulaDialog, true)
+        window.removeEventListener('addFormula', this.addMath, true)
     },
     methods: {
-        editMath () {
-            console.log(this.math)
-            this.showFormulaDialog()
-            setTimeout(() => {
-                const mathIframe = window.frames['mathIframe']
-                console.log(mathIframe.answer.mathquill('cmd', '\\sqrt'))
-
-            }, 1000)
+        addMath () {
+            this.type = 'add'
+            this.latex = ''
+            this.visible = true
         },
-        ok (values) {
-            console.log(values)
-            this.values = values
-            this.editor.cmd.do('insertHTML', values.parameterValue)
+        editMath () {
+            this.type = 'edit'
+            this.latex = '\\frac{1}{2}'
+            this.visible = true
+        },
+        confirm (value) {
+            let html = window.$("<span></span>").mathquill('editable').mathquill('write', value).mathquill('html')
+            html = `<span contenteditable="false" class="mathquill-rendered-math">${html}</span>`
+            this.editor.cmd.do('insertHTML', html)
         },
         getHtml() {
             this.newHtml = this.editor.txt.html()
@@ -67,25 +73,15 @@ export default {
         },
         initEditor() {
             this.editor = new E(this.$refs.editor)
-
             const alertMenuFormulaKey = 'alertMenuFormulaKey'
             this.editor.menus.extend(alertMenuFormulaKey, FormulaMenu)
             this.editor.config.menus = this.editor.config.menus.concat(alertMenuFormulaKey)
-
-            /*this.editor.config.onchange = (newHtml) => {
-                console.log("change 之后最新的 newHtml", newHtml)
-            };*/
             this.editor.config.onchangeTimeout = 200; // 修改为 500ms
             this.editor.config.zIndex = 9
             this.editor.create()
         },
-        showFormulaDialog () {
-            this.visible = true
-            // const mathIframe = window.frames['mathIframe']
-            // mathIframe.answer.mathquill('write', '')
-        },
         listenMenuClick () {
-            window.addEventListener('addFormula', this.showFormulaDialog, true)
+            window.addEventListener('addFormula', this.addMath, true)
         },
     },
 }
