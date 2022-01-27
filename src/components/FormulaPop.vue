@@ -1,37 +1,40 @@
 <template>
-  <a-modal
-    title="新增公式"
-    width="600px"
-    :visible="visible"
-    @ok="ok"
-    @cancel="cancel"
-  >
-    <iframe name="mathIframe" width="100%" height="440" src="/math/index.html" frameborder="0"></iframe>
-  </a-modal>
+    <a-modal title="新增公式" width="600px" :visible="visible" @ok="ok" @cancel="cancel">
+        <math-formula :type="type" :latex="latex" v-if="visible" />
+    </a-modal>
 </template>
-
 <script>
+import MathFormula from '@/components/MathFormula/MathFormula'
 export default {
-  name: 'FormulaPop',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    }
-  },
-  methods: {
-    ok () {
-      const mathIframe = window.frames['mathIframe']
-      const math = mathIframe.answer.mathquill('html')
-      let values = {}
-      values.parameterValue = '<span contenteditable="false" class="mathquill-rendered-math" style="font-size:20px;">' + math + '</span>'
-      this.$emit('ok', values)
-      this.$emit('update:visible', false)
+    name: 'FormulaPop',
+    components: {
+        MathFormula,
     },
-    cancel () {
-      this.$emit('update:visible', false)
+    props: {
+        visible: {
+            type: Boolean,
+            default: false,
+        },
+        latex: {
+            type: String,
+            default: '',
+        },
+        type: {
+            type: String,
+            default: 'add',
+        },
+    },
+    methods: {
+        ok() {
+            const $jmeMath = window.$('#jmeMath')
+            const latex = $jmeMath.mathquill('latex')
+            console.log(latex)
+            this.$emit('confirm', latex)
+            this.$emit('update:visible', false)
+        },
+        cancel() {
+            this.$emit('update:visible', false)
+        }
     }
-  }
 }
 </script>
-

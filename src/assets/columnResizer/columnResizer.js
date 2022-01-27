@@ -33,13 +33,16 @@ export default class ColumnResizer {
         }
         this.initTable()
         this.handleExcelTable()
-        this.handleTableWidth()
         this.initTheadAndColgroup()
+        this.updateAverage()
         this.setColWidth()
+        this.handleTableWidth()
         this.handleResizeHandShank()
+        this.triggerFirstCellHeight()
         this.addEvent()
     }
 
+    // 初始化表格
     initTable () {
         this.tableEle.removeAttribute('width')
         const parentNode = this.tableEle.parentNode
@@ -52,45 +55,16 @@ export default class ColumnResizer {
         }
     }
 
-    destroy () {
-        this.removeEvent()
-    }
-
+    // 非页面插入的表格
     handleExcelTable () {
         const cellpadding = this.tableEle.getAttribute('cellpadding')
         if (!cellpadding) {
-            this.colgroup.remove()
-            this.colgroup = null
+            if (this.colgroup) {
+                this.colgroup.remove()
+                this.colgroup = null
+            }
             this.isExcelTable = true
             this.tableEle.setAttribute('cellpadding', 0)
-            this.triggerFirstCellHeight()
-        }
-    }
-
-    triggerFirstCellHeight () {
-        setTimeout(() => {
-            const evt = new CustomEvent('input', {
-                bubbles: true,
-                cancelable: false,
-            })
-            this.tableEle.dispatchEvent(evt)
-        }, 1000)
-    }
-
-    handleTableWidth () {
-        const width = this.wangEditorEditableContainer.clientWidth - 20
-        const {rows} = this.tableEle.tBodies[0]
-        const colCount = rows[0].childElementCount
-        this.average = (width / colCount).toFixed()
-
-        if (!this.tableEle.style.width) {
-            let width = 500
-            if (this.isExcelTable) {
-                width = this.tableEle.getBoundingClientRect().width
-            } else {
-                width = this.average * colCount
-            }
-            this.setTableWidth(width)
         }
     }
 
@@ -99,6 +73,10 @@ export default class ColumnResizer {
         const tbody = this.tableEle.tBodies[0]
         const {rows} = tbody
         const colCount = rows[0].childElementCount
+        if (this.colgroup && this.colgroup.children && this.colgroup.children.length !== colCount) {
+            this.colgroup.remove()
+            this.colgroup = null
+        }
         if (!this.colgroup) {
             const colgroup = document.createElement('colgroup')
             for (let i = 0 ; i < colCount; i++) {
@@ -120,21 +98,43 @@ export default class ColumnResizer {
         }
     }
 
-    // 初始化默认宽
+    // 更新平均值
+    updateAverage () {
+        if (this.isExcelTable) {
+            const {colMinWidth} = this.opts
+            const {children} = this.colgroup
+            const col = children[0]
+            this.average = Math.max(col.getBoundingClientRect().width, colMinWidth * 2)
+        } else {
+            const width = this.wangEditorEditableContainer.clientWidth - 20
+            const {rows} = this.tableEle.tBodies[0]
+            this.colCount = rows[0].childElementCount
+            this.average = Math.floor(width / this.colCount)
+        }
+    }
+
+    // 初始化col默认宽
     setColWidth () {
         const {children} = this.colgroup
-        const {colMinWidth} = this.opts
         children.forEach(col => {
             const width = col.style.width
             if (!width) {
-                if (this.isExcelTable) {
-                    const width = Math.max(col.getBoundingClientRect().width, colMinWidth * 2)
-                    col.style.width = `${Math.round(width)}px`
-                } else {
-                    col.style.width = `${this.average}px`
-                }
+                col.style.width = `${this.average}px`
             } 
         })
+    }
+
+    // 设置表格默认宽
+    handleTableWidth () {
+        if (!this.tableEle.style.width) {
+            let width = 500
+            if (this.isExcelTable) {
+                width = Math.floor(this.tableEle.getBoundingClientRect().width)
+            } else {
+                width = this.average * this.colCount
+            }
+            this.setTableWidth(width)
+        }
     }
 
     // 增加列调整手柄
@@ -146,6 +146,17 @@ export default class ColumnResizer {
             const i = `<i data-col="${index}" contenteditable="false" class="${this.handshankCls}"></i>`
             cell.insertAdjacentHTML('beforeend', i)
         })
+    }
+
+    // 更新列手柄高
+    triggerFirstCellHeight () {
+        setTimeout(() => {
+            const evt = new CustomEvent('input', {
+                bubbles: true,
+                cancelable: false,
+            })
+            this.tableEle.dispatchEvent(evt)
+        }, 1000)
     }
 
     // 添加一个默认列
@@ -266,6 +277,10 @@ export default class ColumnResizer {
                 i.style.removeProperty('height')
             })
         }
+    }
+
+    destroy () {
+        this.removeEvent()
     }
 
     addEvent () {

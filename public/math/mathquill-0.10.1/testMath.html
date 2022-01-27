@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>MathJax TeX Test Page</title>
+<title>mathquill Test Page</title>
 <link rel="stylesheet" href="./mathquill.css"/>
 <script src="./jquery.min.js"></script>
 <script src="./mathquill.js"></script>
@@ -11,17 +11,50 @@ var MQ = MathQuill.getInterface(2);
 </head>
 <body>
     <p><span id="answer">x=</span></p>
-
+    <p>Solve <span id="problem">ax^2 + bx + c = 0</span></p>
     <script>
       var answerSpan = document.getElementById('answer');
+
       var answerMathField = MQ.MathField(answerSpan, {
         handlers: {
           edit: function() {
-            var enteredMath = answerMathField.latex(); // Get entered math in LaTeX format
-            checkAnswer(enteredMath);
+            var enteredMath = answerMathField.latex(); 
+            // console.log(enteredMath)
           }
         }
       });
+      // 将latex设置到dom
+      answerMathField.latex('ax^2 + bx + c = 0')
+
+      // revert()
+      /* latex转成静态公式 */
+      var problemSpan = document.getElementById('problem');
+      const staticMath = MQ.StaticMath(problemSpan);
+      /* 静态公式反转latex */
+      const html = staticMath.revert().html()
+      // console.log(html)
+
+      // reflow()
+      var mathFieldSpan = $('<span contenteditable="false" class="mathquill-rendered-math"><span class="fraction non-leaf" mathquill-command-id="726"><span class="numerator" mathquill-block-id="728"><span mathquill-command-id="727">3</span><span mathquill-command-id="729">2</span></span><span class="denominator" mathquill-block-id="732"><span mathquill-command-id="731">1</span><span mathquill-command-id="733">2</span><span mathquill-command-id="735">3</span></span><span style="display:inline-block;width:0">&nbsp;</span></span><span mathquill-command-id="738" class="binary-operator">+</span><var mathquill-command-id="740">x</var><sub class="non-leaf" mathquill-command-id="742" mathquill-block-id="744"><var mathquill-command-id="743">a</var><var mathquill-command-id="745">a</var><span mathquill-command-id="747">4</span></sub></span>');
+      // console.log(mathFieldSpan)
+      mathFieldSpan.appendTo(document.body);
+      var mathField = MQ.MathField(mathFieldSpan[0]);
+      mathField.reflow();
+      console.log(mathField.latex())
+
+      // el()
+      const el = answerMathField.el()
+      // console.log(el.outerHTML)
+
+      // latex()
+      const latex = answerMathField.latex()
+      // console.log(latex)
+
+      // latex(latex_string)
+      // answerMathField.latex('\\sqrt{2}')
+
+      // typedText(text)
+      // mathField.typedText('x=-b\\pm \\sqrt b^2 -4ac');
     </script>
 </body>
 </html>

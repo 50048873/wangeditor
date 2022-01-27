@@ -62,7 +62,7 @@ export default {
     },
     mounted () {
         this.$nextTick(() => {
-            $("#jmeMath").mathquill('editable').mathquill("write", this.latex)
+            window.$("#jmeMath").mathquill('editable').mathquill("write", this.latex)
         })
     },
     methods: {
@@ -77,7 +77,7 @@ export default {
             }
         },
         insert (q) {
-            $("#jmeMath").focus().mathquill("write", q.replace("{/}", "\\"))
+            window.$("#jmeMath").focus().mathquill("write", q.replace("{/}", "\\"))
         },
     }
 }

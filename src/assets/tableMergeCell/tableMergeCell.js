@@ -1006,7 +1006,7 @@ export default class TableMergeCell {
         }
         this.menuEle.style.top = `${clientY}px`
         this.menuEle.style.display = 'block'
-        this.contextmenuCell = target
+        this.contextmenuCell = TableMergeCell.getTargetParentCell(target)
         this.handleMenuBtnMergeStatus(target)
         this.handleMenuBtnRowStatus(target)
         this.handleSomeMenuBtns(target)

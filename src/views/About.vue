@@ -3,21 +3,33 @@
         <div ref="editor">
             <div v-html="value"></div>
         </div>
-       <!--  <button type="button" id="btn1" @click="getHtml">获取html</button>
+
+        <button type="button" id="btn1" @click="getHtml">获取html</button>
         <button type="button" id="btn2" @click="setHtml">设置html</button>
-        <div ref="newHtml" class="newHtml"></div> -->
+        <div ref="newHtml" class="newHtml"></div>
+
         <formula-pop 
             :visible.sync="visible" 
             :type='type'
             :latex="latex"
             @confirm="confirm" 
         />
-        <div @click="editMath">\sqrt{2}</div>
+
+        <table class="testTable">
+            <tr>
+                <th>公式</th>
+                <th>操作</th>
+            </tr>
+            <tr v-for="(item, index) in latexArray" :key="index">
+                <td v-html="latexToHtml(item.latex)"></td>
+                <td @click="editMath(item.latex, index)">编辑</td>
+            </tr>
+        </table>
     </div>
 </template>
 <script>
 /* eslint-disable */
-import FormulaPop from '@/components/FormulaPop2'
+import FormulaPop from '@/components/FormulaPop'
 import E from 'wangeditor'
 import { wangEditorTableExtend } from '@/assets/tool'
 import { FormulaMenu } from '@/assets/wangEditorMenuExtention'
@@ -35,11 +47,30 @@ export default {
             type: 'add',
         }
     },
-    /*created () {
+    created () {
         setTimeout(() => {
-            this.value = '<table border="0" cellpadding="0" cellspacing="0" class="tableMergeCell" style="width: 1900px;"><colgroup><col style="width: 380px;"><col style="width: 380px;"><col style="width: 380px;"><col style="width: 380px;"><col style="width: 380px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank"></i></th></tr></thead><tbody><tr><th></th><th></th><th></th><th></th><th></th></tr><tr><td><img src="http://localhost:8080/big.jpg" alt="tu" style="max-width:100%;" contenteditable="false"></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>'
-        }, 2000)
-    },*/
+            this.value = `
+                <span class="mathquill-rendered-math" style="font-size:20px;"><span class="textarea"><textarea data-cke-editable="1" contenteditable="false"></textarea></span><span class="fraction non-leaf" mathquill-command-id="4"><span class="numerator" mathquill-block-id="5"><span mathquill-command-id="11">3</span><span mathquill-command-id="12">2</span></span><span class="denominator" mathquill-block-id="6"><span mathquill-command-id="8">1</span><span mathquill-command-id="9">2</span><span mathquill-command-id="10">3</span></span><span style="display:inline-block;width:0">&nbsp;</span></span><span mathquill-command-id="13" class="binary-operator">+</span><var mathquill-command-id="14">x</var><sub class="non-leaf" mathquill-command-id="16" mathquill-block-id="17"><var mathquill-command-id="19">a</var><var mathquill-command-id="20">a</var><span mathquill-command-id="21">4</span></sub></span><span>&nbsp;</span>​
+            `
+        }, 1000)
+
+        // $(htmlStr).mathquill('editable').mathquill('latex')
+
+        this.latexArray = [
+            {
+                latex: '\\frac{1}{2}'
+            },
+            {
+                latex: '\\sqrt{2}'
+            },
+            {
+                latex: '\\frac{32}{123}+x_{aa4}'
+            },
+            /*{
+                latex: '<span class="mathquill-rendered-math" style="font-size:20px;"><span class="textarea"><textarea data-cke-editable="1" contenteditable="false"></textarea></span><span class="fraction non-leaf" mathquill-command-id="4"><span class="numerator" mathquill-block-id="5"><span mathquill-command-id="11">3</span><span mathquill-command-id="12">2</span></span><span class="denominator" mathquill-block-id="6"><span mathquill-command-id="8">1</span><span mathquill-command-id="9">2</span><span mathquill-command-id="10">3</span></span><span style="display:inline-block;width:0">&nbsp;</span></span><span mathquill-command-id="13" class="binary-operator">+</span><var mathquill-command-id="14">x</var><sub class="non-leaf" mathquill-command-id="16" mathquill-block-id="17"><var mathquill-command-id="19">a</var><var mathquill-command-id="20">a</var><span mathquill-command-id="21">4</span></sub></span><span>&nbsp;</span>​'
+            }*/
+        ]
+    },
     mounted() {
         this.initEditor()
         this.listenMenuClick()
@@ -48,20 +79,36 @@ export default {
         window.removeEventListener('addFormula', this.addMath, true)
     },
     methods: {
+        latexToHtml (latex) {
+            const html = window.$ && window.$("<span></span>").mathquill('editable').mathquill('write', latex).mathquill('html')
+            return `<span class="mathquill-rendered-math">${html}</span>`
+        },
         addMath () {
             this.type = 'add'
             this.latex = ''
             this.visible = true
         },
-        editMath () {
+        editMath (str, index) {
             this.type = 'edit'
-            this.latex = '\\frac{1}{2}'
+            this.latex = str
+            this.currentIndex = index
             this.visible = true
         },
-        confirm (value) {
-            let html = window.$("<span></span>").mathquill('editable').mathquill('write', value).mathquill('html')
-            html = `<span contenteditable="false" class="mathquill-rendered-math">${html}</span>`
-            this.editor.cmd.do('insertHTML', html)
+        confirm (latex) {
+            if (this.type === 'add') {
+                console.log('add')
+                let html = window.$("<span></span>").mathquill('editable').mathquill('write', latex).mathquill('html')
+                html = `<span contenteditable="false" class="mathquill-rendered-math">${html}</span>`
+                let range = this.editor.selection.getRange()
+                range.insertNode($(html).get(0))
+                range.collapse()
+                this.latexArray.push({
+                    latex
+                })
+            } else if (this.type === 'edit') {
+                console.log('edit')
+                this.latexArray[this.currentIndex].latex = latex
+            }
         },
         getHtml() {
             this.newHtml = this.editor.txt.html()
@@ -86,7 +133,7 @@ export default {
     },
 }
 </script>
-<style>
+<style lang="less">
 .newHtml {
     border-collapse: collapse;
 }
@@ -99,5 +146,19 @@ export default {
 
 .w-e-text-container {
     height: 330px !important;
+}
+
+#btn1 {
+    margin-top: 15px;
+}
+
+.testTable {
+    position: absolute;
+    right: 15px;
+    width: 200px;
+    th, td {
+        border: 1px solid;
+        padding: 5px 10px;
+    }
 }
 </style>
