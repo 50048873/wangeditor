@@ -46,7 +46,7 @@ export const wangEditorTableExtend = {
             const pasteText = (e.clipboardData || window.clipboardData).getData('text')
             console.log(pasteText === ' ', pasteText, pasteText.length)
             
-            const tableMergeCell_active = window.localStorage.getItem('tableMergeCell_active')
+            const tableMergeCell_active = window.localStorage.getItem('tableMergeCell_active') || ''
             if (!tableMergeCell_active.includes('tableMergeCell_active')) return
             const tempDiv = document.createElement('div')
             tempDiv.insertAdjacentHTML('beforeend', tableMergeCell_active)
