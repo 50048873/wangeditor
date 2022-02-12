@@ -64,6 +64,14 @@ export default class TableMergeCell {
         this.menuEle = null
         this.menus = [
             {
+                name: '复制表格',
+                key: 'copyTable',
+            },
+            /*{
+                name: '粘贴表格',
+                key: 'pasteTable',
+            },*/
+            {
                 name: '靠左',
                 key: 'textAlignLeft',
             },
@@ -820,6 +828,59 @@ export default class TableMergeCell {
         })
     }
 
+    copyTable () {
+        console.log('复制表格')
+        const activeEle = document.querySelector('.tableMergeCell_active')
+        if (activeEle) {
+            activeEle.classList.remove('tableMergeCell_active')
+        }
+        this.tableEle.classList.add('tableMergeCell_active')
+        window.localStorage.setItem('tableMergeCell_active', this.tableEle.outerHTML)
+        if (this.tableEle.classList.contains('tableMergeCell_active')) {
+            const htmlStr = ' '
+            const input = document.createElement('INPUT')
+            input.style.opacity  = 0
+            input.style.position = 'absolute'
+            input.style.left = '-100000px'
+            document.body.appendChild(input)
+            input.value = htmlStr
+            input.select()
+            input.setSelectionRange(0, htmlStr.length)
+            document.execCommand('copy')
+            document.body.removeChild(input)
+        }
+    }
+
+    activeTable () {
+        const {rows} = this
+        const firstTr = rows[0]
+        const lastTr = rows[rows.length - 1]
+        const firstTd = firstTr.firstElementChild
+        const lastTd = lastTr.lastElementChild
+        if (firstTd == this.cellStart && lastTd == this.cellEnd) {
+            console.log('select all')
+            this.copyTable()
+        }
+    }
+
+    /*pasteTable = (e) => {
+        console.log('pasteTable', window.event.srcElement)
+        
+        e.preventDefault()
+        const selection = window.getSelection()
+        if (selection.anchorNode.nodeType !== 3) return
+        const html = TableMergeCell.copyTable.cloneNode(true)
+        if (!selection.rangeCount) return false
+        selection.deleteFromDocument() 
+        const range = selection.getRangeAt(0)
+        console.log(123, selection, selection.anchorNode.nodeType)
+        range.insertNode(html)
+        const table = selection.anchorNode.nextElementSibling
+        const tableParentNode = table.parentNode
+        tableParentNode.insertAdjacentElement('beforebegin', table)
+        tableParentNode.remove()
+    }*/
+
     // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
@@ -829,6 +890,12 @@ export default class TableMergeCell {
         const key = target.dataset.key
         const {row, col} = this.getCellIndex(this.contextmenuCell)
         switch (key) {
+            case 'copyTable':
+                this.copyTable()
+                break
+            /*case 'pasteTable':
+                this.pasteTable()
+                break*/
             case 'textAlignLeft':
                 this.textAlignLeft()
                 break
@@ -943,6 +1010,7 @@ export default class TableMergeCell {
             if (this.tableEle.contains(target)) {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
+                this.activeTable()
             }
             this.ready = false
         }
@@ -1244,6 +1312,8 @@ export default class TableMergeCell {
         this.tableEle.addEventListener('paste', this.paste, false)
         window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, true)
         window.addEventListener('keydown', this.keydown, true)
+
+        // window.addEventListener('paste', this.pasteTable, false)
     }
 
     removeEvent () {
@@ -1256,5 +1326,7 @@ export default class TableMergeCell {
         this.tableEle.removeEventListener('paste', this.paste, false)
         window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, true)
         window.removeEventListener('keydown', this.keydown, true)
+
+        // window.removeEventListener('paste', this.pasteTable, false)
     }
 }

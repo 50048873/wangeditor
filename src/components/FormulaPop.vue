@@ -28,7 +28,6 @@ export default {
         ok() {
             const $jmeMath = window.$('#jmeMath')
             const latex = $jmeMath.mathquill('latex')
-            console.log(latex)
             this.$emit('confirm', latex)
             this.$emit('update:visible', false)
         },

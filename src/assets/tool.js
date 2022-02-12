@@ -10,6 +10,9 @@ export const wangEditorTableExtend = {
             this.addInsertTableIconlistener()
             this.addPasteTableListener()
             window.addEventListener('keydown', this.tableObserve, true)
+
+            window.addEventListener('paste', this.pasteTable, false)
+            window.addEventListener('mousedown', this.mousedown, true)
         })
     },
     watch: {
@@ -23,6 +26,48 @@ export const wangEditorTableExtend = {
         }
     },
     methods: {
+        mousedown (e) {
+            const {target} = e
+            if (this.$refs.editor && !this.$refs.editor.contains(target)) {
+                this.removeTableActiveCls()
+            }
+        },
+        removeTableActiveCls () {
+            const activeEles = document.querySelectorAll('.tableMergeCell_active')
+            if (activeEles) {
+                activeEles.forEach(ele => {
+                    ele.classList.remove('tableMergeCell_active')
+                })
+            }
+        },
+        pasteTable (e) {
+            e.preventDefault()
+
+            const pasteText = (e.clipboardData || window.clipboardData).getData('text')
+            console.log(pasteText === ' ', pasteText, pasteText.length)
+            
+            const tableMergeCell_active = window.localStorage.getItem('tableMergeCell_active')
+            if (!tableMergeCell_active.includes('tableMergeCell_active')) return
+            const tempDiv = document.createElement('div')
+            tempDiv.insertAdjacentHTML('beforeend', tableMergeCell_active)
+            const table = tempDiv.firstElementChild
+
+            const selection = window.getSelection()
+            if (!selection.rangeCount) return false
+            const range = selection.getRangeAt(0)
+            if (pasteText === ' ') {
+                range.insertNode(table)
+                this.removeTableActiveCls()
+            }
+
+            if (!table || table.tagName !== 'TABLE') return
+            const p = table.parentNode
+            if (!p || p.tagName !== 'P') return
+            console.log(p)
+            p.insertAdjacentElement('afterend', table)
+            selection.collapseToEnd()
+        },
+
         initTableInteraction() {
             if (!this.$refs.editor) {
                 throw new Error('请为wangEditor富文本容器元素提供ref="editor"属性')
@@ -110,6 +155,8 @@ export const wangEditorTableExtend = {
             this.$refs.editor.removeEventListener('paste', this.handlePaste, false)
         }
         window.removeEventListener('keydown', this.tableObserve, true)
+        window.removeEventListener('paste', this.pasteTable, false)
+        window.removeEventListener('mousedown', this.removeTableActiveCls, true)
     },
 }
 
