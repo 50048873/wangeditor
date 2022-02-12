@@ -67,10 +67,6 @@ export default class TableMergeCell {
                 name: '复制表格',
                 key: 'copyTable',
             },
-            /*{
-                name: '粘贴表格',
-                key: 'pasteTable',
-            },*/
             {
                 name: '靠左',
                 key: 'textAlignLeft',
@@ -863,24 +859,6 @@ export default class TableMergeCell {
         }
     }
 
-    /*pasteTable = (e) => {
-        console.log('pasteTable', window.event.srcElement)
-        
-        e.preventDefault()
-        const selection = window.getSelection()
-        if (selection.anchorNode.nodeType !== 3) return
-        const html = TableMergeCell.copyTable.cloneNode(true)
-        if (!selection.rangeCount) return false
-        selection.deleteFromDocument() 
-        const range = selection.getRangeAt(0)
-        console.log(123, selection, selection.anchorNode.nodeType)
-        range.insertNode(html)
-        const table = selection.anchorNode.nextElementSibling
-        const tableParentNode = table.parentNode
-        tableParentNode.insertAdjacentElement('beforebegin', table)
-        tableParentNode.remove()
-    }*/
-
     // 点击右键菜单项时
     menuClick = (e) => {
         const {target} = e
@@ -893,9 +871,6 @@ export default class TableMergeCell {
             case 'copyTable':
                 this.copyTable()
                 break
-            /*case 'pasteTable':
-                this.pasteTable()
-                break*/
             case 'textAlignLeft':
                 this.textAlignLeft()
                 break
@@ -1312,8 +1287,6 @@ export default class TableMergeCell {
         this.tableEle.addEventListener('paste', this.paste, false)
         window.addEventListener('mousedown', this.removeSomeNoSelfIsClicked, true)
         window.addEventListener('keydown', this.keydown, true)
-
-        // window.addEventListener('paste', this.pasteTable, false)
     }
 
     removeEvent () {
@@ -1326,7 +1299,5 @@ export default class TableMergeCell {
         this.tableEle.removeEventListener('paste', this.paste, false)
         window.removeEventListener('mousedown', this.removeSomeNoSelfIsClicked, true)
         window.removeEventListener('keydown', this.keydown, true)
-
-        // window.removeEventListener('paste', this.pasteTable, false)
     }
 }

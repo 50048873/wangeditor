@@ -58,14 +58,17 @@ export const wangEditorTableExtend = {
             if (pasteText === ' ') {
                 range.insertNode(table)
                 this.removeTableActiveCls()
+                selection.collapseToEnd()
             }
-
-            if (!table || table.tagName !== 'TABLE') return
-            const p = table.parentNode
+            const getParentP = (target) => {
+                while (target.tagName !== 'P' && target.parentNode) {
+                    target = target.parentNode
+                }
+                return target
+            }
+            const p = getParentP(table)
             if (!p || p.tagName !== 'P') return
-            console.log(p)
             p.insertAdjacentElement('afterend', table)
-            selection.collapseToEnd()
         },
 
         initTableInteraction() {
