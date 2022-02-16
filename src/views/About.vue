@@ -15,7 +15,7 @@
             @confirm="confirm" 
         />
 
-        <table class="testTable">
+        <!-- <table class="testTable">
             <tr>
                 <th>公式</th>
                 <th>操作</th>
@@ -24,7 +24,7 @@
                 <td v-html="latexToHtml(item.latex)"></td>
                 <td @click="editMath(item.latex, index)">编辑</td>
             </tr>
-        </table>
+        </table> -->
     </div>
 </template>
 <script>
@@ -48,11 +48,11 @@ export default {
         }
     },
     created () {
-        /*setTimeout(() => {
+        setTimeout(() => {
             this.value = `
-                <span class="mathquill-rendered-math" style="font-size:20px;"><span class="textarea"><textarea data-cke-editable="1" contenteditable="false"></textarea></span><span class="fraction non-leaf" mathquill-command-id="4"><span class="numerator" mathquill-block-id="5"><span mathquill-command-id="11">3</span><span mathquill-command-id="12">2</span></span><span class="denominator" mathquill-block-id="6"><span mathquill-command-id="8">1</span><span mathquill-command-id="9">2</span><span mathquill-command-id="10">3</span></span><span style="display:inline-block;width:0">&nbsp;</span></span><span mathquill-command-id="13" class="binary-operator">+</span><var mathquill-command-id="14">x</var><sub class="non-leaf" mathquill-command-id="16" mathquill-block-id="17"><var mathquill-command-id="19">a</var><var mathquill-command-id="20">a</var><span mathquill-command-id="21">4</span></sub></span><span>&nbsp;</span>​
+                
             `
-        }, 1000)*/
+        }, 1000)
 
         // $(htmlStr).mathquill('editable').mathquill('latex')
 

@@ -825,7 +825,7 @@ export default class TableMergeCell {
     }
 
     copyTable () {
-        console.log('复制表格')
+        console.log('复制表格，localStorage缓存表格数据，并执行document.execCommand(copy)命令')
         const activeEle = document.querySelector('.tableMergeCell_active')
         if (activeEle) {
             activeEle.classList.remove('tableMergeCell_active')
@@ -1056,23 +1056,23 @@ export default class TableMergeCell {
     }
 
     copy = (e) => {
-        e.preventDefault()
-        let selectionStr = window.getSelection().toString()
+        const selectionStr = window.getSelection().toString()
+        const copyedCellsArray = this.getSelectedCells(true)
         if (selectionStr) {
-            if (e.clipboardData) {
-                e.clipboardData.setData('text/plain', selectionStr)
-            } else if (window.clipboardData) {
-                window.clipboardData.setData('text', selectionStr)
-            }
+            e.stopPropagation()
+            console.log('监听整个表格复制命令（document.execCommand()），清空拷贝的单元格数据')
             TableMergeCell.copyedCellsArray = []
-        } else {
+        } else if (Array.isArray(copyedCellsArray)) {
+            e.stopPropagation()
+            e.preventDefault()
+            console.log('复制单元格')
             if (e.clipboardData) {
                 e.clipboardData.setData('text/plain', '')
             } else if (window.clipboardData) {
                 window.clipboardData.setData('text', '')
             }
             // 二维数组记录复制的单元格
-            TableMergeCell.copyedCellsArray = this.getSelectedCells(true)
+            TableMergeCell.copyedCellsArray = copyedCellsArray
         }
     }
 

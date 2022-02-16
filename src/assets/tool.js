@@ -8,10 +8,11 @@ export const wangEditorTableExtend = {
     mounted() {
         this.$nextTick(() => {
             this.addInsertTableIconlistener()
-            this.addPasteTableListener()
+            
             window.addEventListener('keydown', this.tableObserve, true)
-
-            window.addEventListener('paste', this.pasteTable, false)
+            this.textElem = window.editor.$textElem.elems[0]
+            this.textElem.addEventListener('paste', this.pasteTable, true)
+            window.addEventListener('copy', this.copy, false)
             window.addEventListener('mousedown', this.mousedown, true)
         })
     },
@@ -26,6 +27,13 @@ export const wangEditorTableExtend = {
         }
     },
     methods: {
+        copy () {
+            const selectionStr = window.getSelection().toString()
+            if (selectionStr) {
+                console.log('监听整个表格复制命令（document.execCommand()），清空拷贝的单元格数据')
+                TableMergeCell.copyedCellsArray = []
+            }
+        },
         mousedown (e) {
             const {target} = e
             if (this.$refs.editor && !this.$refs.editor.contains(target)) {
@@ -41,34 +49,53 @@ export const wangEditorTableExtend = {
             }
         },
         pasteTable (e) {
-            e.preventDefault()
-
-            const pasteText = (e.clipboardData || window.clipboardData).getData('text')
-            console.log(pasteText === ' ', pasteText, pasteText.length)
+            const clipboardData = e.clipboardData || window.clipboardData
+            const pasteText = clipboardData.getData('text')
+            console.log('textElem listen pasteTable event', pasteText.length, pasteText === ' ')
+            const getImageItem = (clipboardData) => {
+                const {items, types} = clipboardData
+                let item = null
+                console.log(items, types)
+                for (let i = 0; i < types.length; i++) {
+                    console.log(items[i])
+                    if (types[i] === 'Files') {
+                        item = items[i]
+                        break
+                    }
+                }
+                return item
+            }
+            const item = getImageItem(clipboardData)
             
-            const tableMergeCell_active = window.localStorage.getItem('tableMergeCell_active') || ''
-            if (!tableMergeCell_active.includes('tableMergeCell_active')) return
-            const tempDiv = document.createElement('div')
-            tempDiv.insertAdjacentHTML('beforeend', tableMergeCell_active)
-            const table = tempDiv.firstElementChild
-
-            const selection = window.getSelection()
-            if (!selection.rangeCount) return false
-            const range = selection.getRangeAt(0)
             if (pasteText === ' ') {
+                console.log('粘贴整个表格')
+                e.stopPropagation()
+                e.preventDefault()
+                const tableMergeCell_active = window.localStorage.getItem('tableMergeCell_active') || ''
+                if (!tableMergeCell_active.includes('tableMergeCell_active')) return
+                const tempDiv = document.createElement('div')
+                tempDiv.insertAdjacentHTML('beforeend', tableMergeCell_active)
+                const table = tempDiv.firstElementChild
+
+                const selection = window.getSelection()
+                if (!selection.rangeCount) return false
+                const range = selection.getRangeAt(0)
                 range.insertNode(table)
                 this.removeTableActiveCls()
                 selection.collapseToEnd()
-            }
-            const getParentP = (target) => {
-                while (target.tagName !== 'P' && target.parentNode) {
-                    target = target.parentNode
+
+                const getParentP = (target) => {
+                    while (target.tagName !== 'P' && target.parentNode) {
+                        target = target.parentNode
+                    }
+                    return target
                 }
-                return target
+                const p = getParentP(table)
+                if (!p || p.tagName !== 'P') return
+                p.insertAdjacentElement('afterend', table)
+            } else if (item && item.kind === 'file' && item.type.match(/^image\//i)) {
+                e.stopPropagation()
             }
-            const p = getParentP(table)
-            if (!p || p.tagName !== 'P') return
-            p.insertAdjacentElement('afterend', table)
         },
 
         initTableInteraction() {
@@ -108,15 +135,7 @@ export const wangEditorTableExtend = {
             this.iconTable = document.querySelector(".w-e-menu[data-title='表格']")
             this.iconTable && this.iconTable.addEventListener('click', this.addInsertTextListener, false)
         },
-        handlePaste(event) {
-            const pasteData = (event.clipboardData || window.clipboardData).getData('text/html')
-            if (pasteData && pasteData.includes('<table')) {
-                this.initTableInteraction()
-            }
-        },
-        addPasteTableListener() {
-            this.$refs.editor.addEventListener('paste', this.handlePaste, false)
-        },
+        // 点击插入表格，输入回车键时
         tableObserve() {
             const callback = (mutationsList) => {
                 for (const mutation of mutationsList) {
@@ -154,12 +173,10 @@ export const wangEditorTableExtend = {
         if (this.insertText) {
             this.insertText.removeEventListener('click', this.initTableInteraction, false)
         }
-        if (this.$refs.editor) {
-            this.$refs.editor.removeEventListener('paste', this.handlePaste, false)
-        }
         window.removeEventListener('keydown', this.tableObserve, true)
-        window.removeEventListener('paste', this.pasteTable, false)
-        window.removeEventListener('mousedown', this.removeTableActiveCls, true)
+        this.textElem.removeEventListener('paste', this.pasteTable, true)
+        window.removeEventListener('copy', this.copy, false)
+        window.removeEventListener('mousedown', this.mousedown, true)
     },
 }
 
