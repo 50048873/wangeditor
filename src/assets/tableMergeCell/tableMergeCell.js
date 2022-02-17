@@ -157,6 +157,11 @@ export default class TableMergeCell {
         }
     }
 
+    handleExcelTableSpace (cell) {
+        const {innerHTML} = cell
+        cell.innerHTML = innerHTML.replace(/(&nbsp;){3,}/g, '<br>')
+    }
+
     // 补齐从excel复制粘贴过来的表格单元格
     handleTableFromExcel () {
         const [colgroup, tbody] = this.tableEle.children
@@ -169,6 +174,7 @@ export default class TableMergeCell {
                 const colLen = cells.length
                 for (let j = 0; j < colLen; j++) {
                     const cell = cells[j]
+                    this.handleExcelTableSpace(cell)
                     const rowspan = cell.getAttribute('rowspan')
                     const colspan = cell.getAttribute('colspan')
                     if (rowspan >= 1) {

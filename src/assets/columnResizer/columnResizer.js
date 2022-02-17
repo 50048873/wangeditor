@@ -124,12 +124,29 @@ export default class ColumnResizer {
         })
     }
 
+    // 获取col合计值
+    getColTotal () {
+        const {children} = this.colgroup
+        let total = 0
+        children.forEach(col => {
+            let width = col.style.width
+            if (width) {
+                const count = Number.parseInt(width)
+                if (typeof count === 'number') {
+                    total += count
+                }
+            } 
+        })
+        return total
+    }
+
     // 设置表格默认宽
     handleTableWidth () {
         if (!this.tableEle.style.width) {
             let width = 500
             if (this.isExcelTable) {
-                width = Math.floor(this.tableEle.getBoundingClientRect().width)
+                const totalWidth = this.getColTotal()
+                width = totalWidth ? totalWidth : Math.floor(this.tableEle.getBoundingClientRect().width)
             } else {
                 width = this.average * this.colCount
             }

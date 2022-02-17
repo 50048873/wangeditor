@@ -50,14 +50,18 @@ export const wangEditorTableExtend = {
         },
         pasteTable (e) {
             const clipboardData = e.clipboardData || window.clipboardData
-            const pasteText = clipboardData.getData('text')
-            console.log('textElem listen pasteTable event', pasteText.length, pasteText === ' ')
+            const textPlain = clipboardData.getData('text')
+            const textHtml = clipboardData.getData('text/html')
+            console.log('textElem listen pasteTable event', textPlain.length, textPlain === ' ')
             const getImageItem = (clipboardData) => {
+                /*
+                 * 图片： types: ['text/html', 'image/png']
+                 * 表格： type: ['text/plain', 'text/html', 'text/rtf', 'Files']
+                */
                 const {items, types} = clipboardData
                 let item = null
                 console.log(items, types)
                 for (let i = 0; i < types.length; i++) {
-                    console.log(items[i])
                     if (types[i] === 'Files') {
                         item = items[i]
                         break
@@ -66,8 +70,9 @@ export const wangEditorTableExtend = {
                 return item
             }
             const item = getImageItem(clipboardData)
+            const isPasteImg = item && item.kind === 'file' && item.type.match(/^image\//i) && !textHtml.includes('<table') && !textHtml.includes('</table>')
             
-            if (pasteText === ' ') {
+            if (textPlain === ' ') {
                 console.log('粘贴整个表格')
                 e.stopPropagation()
                 e.preventDefault()
@@ -93,8 +98,9 @@ export const wangEditorTableExtend = {
                 const p = getParentP(table)
                 if (!p || p.tagName !== 'P') return
                 p.insertAdjacentElement('afterend', table)
-            } else if (item && item.kind === 'file' && item.type.match(/^image\//i)) {
+            } else if (isPasteImg) {
                 e.stopPropagation()
+                console.log(item)
             }
         },
 
@@ -131,9 +137,17 @@ export const wangEditorTableExtend = {
             this.insertText = this.iconTable.querySelector('button.right')
             this.insertText && this.insertText.addEventListener('click', this.initTableInteraction, false)
         },
+        removeHandshank() {
+            const tableMergeCellHandshank = document.querySelector('.tableMergeCell-subline')
+            if (tableMergeCellHandshank && tableMergeCellHandshank.classList) {
+                tableMergeCellHandshank.classList.remove('tableMergeCell-handshank-hover', 'tableMergeCell-subline')
+            }
+        },
         addInsertTableIconlistener() {
             this.iconTable = document.querySelector(".w-e-menu[data-title='表格']")
+            this.iconUndo = document.querySelector(".w-e-menu[data-title='撤销']")
             this.iconTable && this.iconTable.addEventListener('click', this.addInsertTextListener, false)
+            this.iconUndo && this.iconUndo.addEventListener('click', this.removeHandshank, false)
         },
         // 点击插入表格，输入回车键时
         tableObserve() {
