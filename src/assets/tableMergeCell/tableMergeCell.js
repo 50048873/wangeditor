@@ -195,7 +195,7 @@ export default class TableMergeCell {
     }
 
     // 添加调试坐标
-    addCellLocation () {
+    /*addCellLocation () {
         const {rows} = this
         rows.forEach((row, i) => {
             const cells = row.children
@@ -203,7 +203,7 @@ export default class TableMergeCell {
                 cell.textContent = i + '-' + j
             })
         })
-    }
+    }*/
 
     // 同步最大行数和最大列数
     syncMaxRowAndColCount () {
@@ -1066,12 +1066,12 @@ export default class TableMergeCell {
         const copyedCellsArray = this.getSelectedCells(true)
         if (selectionStr) {
             e.stopPropagation()
-            console.log('监听整个表格复制命令（document.execCommand()），清空拷贝的单元格数据')
-            TableMergeCell.copyedCellsArray = []
+            // console.log('表格监听复制命令，清空拷贝的单元格数据')
+            // TableMergeCell.copyedCellsArray = []
         } else if (Array.isArray(copyedCellsArray)) {
             e.stopPropagation()
             e.preventDefault()
-            console.log('复制单元格')
+            console.log('复制单元格并清空剪切版')
             if (e.clipboardData) {
                 e.clipboardData.setData('text/plain', '')
             } else if (window.clipboardData) {
@@ -1173,17 +1173,19 @@ export default class TableMergeCell {
     paste = (e) => {
         const selectedCells = this.getSelectedCells(true)
         const clipboardData = e.clipboardData || window.clipboardData
+        const data = clipboardData.getData('text')
         if (clipboardData.items.length > 2) {
             e.preventDefault()
             e.stopPropagation()
-            const data = clipboardData.getData('text')
             const excelData = TableMergeCell.handleExcelData(data)
             this.handlePaste(selectedCells, excelData)
         } else if (TableMergeCell.copyedCellsArray.length) {
-            e.preventDefault()
-            this.handlePaste(selectedCells, TableMergeCell.copyedCellsArray)
-            this.indexStart = TableMergeCell.getIndexDefaultValue()
-            this.indexEnd = TableMergeCell.getIndexDefaultValue()
+            if (!data) {
+                e.preventDefault()
+                this.handlePaste(selectedCells, TableMergeCell.copyedCellsArray)
+                this.indexStart = TableMergeCell.getIndexDefaultValue()
+                this.indexEnd = TableMergeCell.getIndexDefaultValue()
+            } 
         }
     }
 

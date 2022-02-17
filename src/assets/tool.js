@@ -12,7 +12,7 @@ export const wangEditorTableExtend = {
             window.addEventListener('keydown', this.tableObserve, true)
             this.textElem = window.editor.$textElem.elems[0]
             this.textElem.addEventListener('paste', this.pasteTable, true)
-            window.addEventListener('copy', this.copy, false)
+            // window.addEventListener('copy', this.copy, false)
             window.addEventListener('mousedown', this.mousedown, true)
         })
     },
@@ -27,13 +27,13 @@ export const wangEditorTableExtend = {
         }
     },
     methods: {
-        copy () {
+        /*copy () {
             const selectionStr = window.getSelection().toString()
+            console.log('window监听复制命令，如果复制了文本，则清空拷贝的单元格数据')
             if (selectionStr) {
-                console.log('监听整个表格复制命令（document.execCommand()），清空拷贝的单元格数据')
                 TableMergeCell.copyedCellsArray = []
             }
-        },
+        },*/
         mousedown (e) {
             const {target} = e
             if (this.$refs.editor && !this.$refs.editor.contains(target)) {
@@ -52,7 +52,7 @@ export const wangEditorTableExtend = {
             const clipboardData = e.clipboardData || window.clipboardData
             const textPlain = clipboardData.getData('text')
             const textHtml = clipboardData.getData('text/html')
-            console.log('textElem listen pasteTable event', textPlain.length, textPlain === ' ')
+            
             const getImageItem = (clipboardData) => {
                 /*
                  * 图片： types: ['text/html', 'image/png']
@@ -72,6 +72,8 @@ export const wangEditorTableExtend = {
             const item = getImageItem(clipboardData)
             const isPasteImg = item && item.kind === 'file' && item.type.match(/^image\//i) && !textHtml.includes('<table') && !textHtml.includes('</table>')
             
+            console.log('textElem listen pasteTable event', textPlain.length, textPlain === ' ', isPasteImg)
+
             if (textPlain === ' ') {
                 console.log('粘贴整个表格')
                 e.stopPropagation()
@@ -189,7 +191,7 @@ export const wangEditorTableExtend = {
         }
         window.removeEventListener('keydown', this.tableObserve, true)
         this.textElem.removeEventListener('paste', this.pasteTable, true)
-        window.removeEventListener('copy', this.copy, false)
+        // window.removeEventListener('copy', this.copy, false)
         window.removeEventListener('mousedown', this.mousedown, true)
     },
 }
