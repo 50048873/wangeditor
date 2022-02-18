@@ -50,7 +50,7 @@ export default {
     created () {
         setTimeout(() => {
             this.value = `
-                
+                <table border="0" cellpadding="0" cellspacing="0" class="tableMergeCell" style="width: 1895px;"><colgroup><col style="width: 379px;"><col style="width: 379px;"><col style="width: 379px;"><col style="width: 379px;"><col style="width: 379px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank"></i></th></tr></thead><tbody><tr><th></th><th></th><th></th><th></th><th></th></tr><tr><td rowspan="2" colspan="1"></td><td></td><td></td><td></td><td></td></tr><tr><td style="display: none;"></td><td rowspan="2" colspan="1"></td><td></td><td></td><td></td></tr><tr><td></td><td style="display: none;"></td><td></td><td></td><td></td></tr><tr><td rowspan="2" colspan="1"></td><td></td><td></td><td></td><td></td></tr><tr><td style="display: none;"></td><td rowspan="3" colspan="1"></td><td></td><td></td><td></td></tr><tr><td></td><td style="display: none;"></td><td rowspan="3" colspan="1"></td><td></td><td></td></tr><tr><td></td><td style="display: none;"></td><td style="display: none;"></td><td></td><td></td></tr><tr><td></td><td></td><td style="display: none;"></td><td rowspan="2" colspan="1"></td><td></td></tr><tr><td></td><td></td><td></td><td style="display: none;"></td><td></td></tr></tbody></table>
             `
         }, 1000)
 
@@ -148,7 +148,7 @@ export default {
 }
 
 .w-e-text-container {
-    height: 330px !important;
+    height: 530px !important;
 }
 
 #btn1 {

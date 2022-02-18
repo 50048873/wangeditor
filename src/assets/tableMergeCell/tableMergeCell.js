@@ -296,9 +296,6 @@ export default class TableMergeCell {
 
     // 高亮选取的单元格
     highlightSelectedCells () {
-        const {rows} = this
-        const isValid = this.selectedCellsIsValid(rows)
-        if (!isValid) return
         const selectedCells = this.getSelectedCells()
         selectedCells.forEach(ele => {
             this.addClass(ele)
@@ -413,7 +410,7 @@ export default class TableMergeCell {
         if (!this.cellStart) return index
         const {tagName} = this.cellStart
         const {rows} = this
-        if (tagName === 'TH') {
+        /*if (tagName === 'TH') {
             const firstTr = rows[0]
             const {children} = firstTr
             const childLen = children.length
@@ -425,7 +422,7 @@ export default class TableMergeCell {
                     break
                 }
             }
-        } else if (tagName === 'TD') {
+        } else if (tagName === 'TD') {*/
             for (let i = 0; i < this.maxRowCount; i++) {
                 const tr = rows[i]
                 const {children} = tr
@@ -442,7 +439,7 @@ export default class TableMergeCell {
                     break
                 }
             }
-        }
+        // }
         
         return index
     }
@@ -935,6 +932,7 @@ export default class TableMergeCell {
             this.ready = true
             this.cellStart = target
             this.indexStart = this.getCellIndex(target)
+            console.log(this.cellStart)
             this.removeClass()
             this.addClass(target)
         }
@@ -964,24 +962,73 @@ export default class TableMergeCell {
         }
     }
 
+    getCellIndexRange () {
+        console.log(this.cellEnd)
+        const {rows} = this
+        let indexEnd_row = this.indexEnd.row
+        const indexEnd_col = this.indexEnd.col
+        let totalRow = 0
+        for (let i = this.indexStart.row; i <= indexEnd_row; i++) {
+            // console.log(i)
+            const tr = rows[i]
+            const {children} = tr
+            const childLen = children.length
+            let rowspanArray = []
+            for (let j = this.indexStart.col; j <= indexEnd_col; j++) {
+                const cell = children[j]
+                const {rowspan} = this.getCellSpanProperty(cell)
+                rowspanArray.push(rowspan)
+            } 
+            const maxRowspan = Math.max(...rowspanArray)
+            // totalRow = maxRowspan > 1 ? (i + (maxRowspan - 1)) : i
+            totalRow = i + (maxRowspan - 1)
+            if (totalRow > indexEnd_row) {
+                indexEnd_row = totalRow
+            }
+        }
+        console.log(totalRow)
+    }
+
     mousemove = (e) => {
+        e.preventDefault()
         let {target} = e
         target = TableMergeCell.getTargetParentCell(target)
-        if (this.ready && this.tableEle.contains(target)) {
+        if (this.ready && this.tBody.contains(target)) {
             clearTimeout(this.timer)
             this.timer = setTimeout(() => {
-                const {rowspan, colspan} = this.getCellSpanProperty(target)
-                if (rowspan > 1 || colspan > 1) return
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
-                this.removeClass()
+                
+                /*this.removeClass()
                 this.highlightSelectedCells()
                 const selection = window.getSelection()
                 if (this.cellStart !== this.cellEnd) {
                     selection.collapseToEnd()
-                }
+                }*/
             }, 1000 / 60)
         }
+    }
+
+    validateCellRange () {
+        console.log(this.indexStart, this.indexEnd)
+        let isInvalid = false
+        if (this.indexStart.row > this.indexEnd.row) {
+            Modal && Modal.confirm({
+                title: '提示',
+                content: '开始行不能小于结束行',
+                zIndex: 10009,
+            })
+            isInvalid = true
+        }
+        if (this.indexStart.col > this.indexEnd.col) {
+            Modal && Modal.confirm({
+                title: '提示',
+                content: '开始列不能小于结束列',
+                zIndex: 10009,
+            })
+            isInvalid = true
+        }
+        return isInvalid
     }
 
     mouseup = (e) => {
@@ -991,6 +1038,10 @@ export default class TableMergeCell {
             if (this.tableEle.contains(target)) {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
+                this.addClass(target)
+                const isInvalid = this.validateCellRange()
+                if (isInvalid) return
+                this.getCellIndexRange()
                 this.activeTable()
             }
             this.ready = false
@@ -1287,8 +1338,8 @@ export default class TableMergeCell {
 
     addEvent () {
         this.tableEle.addEventListener('mousedown', this.mousedown, false)
-        window.addEventListener('mousemove', this.mousemove, false)
-        window.addEventListener('mouseup', this.mouseup, false)
+        this.tableEle.addEventListener('mousemove', this.mousemove, false)
+        this.tableEle.addEventListener('mouseup', this.mouseup, false)
         this.tableEle.addEventListener('click', this.tableClick, false)
         this.tableEle.addEventListener('contextmenu', this.contextmenu, false)
         this.tableEle.addEventListener('copy', this.copy, false)
@@ -1299,8 +1350,8 @@ export default class TableMergeCell {
 
     removeEvent () {
         this.tableEle.removeEventListener('mousedown', this.mousedown, false)
-        window.removeEventListener('mousemove', this.mousemove, false)
-        window.removeEventListener('mouseup', this.mouseup, false)
+        this.tableEle.removeEventListener('mousemove', this.mousemove, false)
+        this.tableEle.removeEventListener('mouseup', this.mouseup, false)
         this.tableEle.removeEventListener('click', this.tableClick, false)
         this.tableEle.removeEventListener('contextmenu', this.contextmenu, false)
         this.tableEle.removeEventListener('copy', this.copy, false)
