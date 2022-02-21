@@ -1175,11 +1175,13 @@ export default class TableMergeCell {
         const clipboardData = e.clipboardData || window.clipboardData
         const data = clipboardData.getData('text')
         if (clipboardData.items.length > 2) {
+            console.log(1)
             e.preventDefault()
             e.stopPropagation()
             const excelData = TableMergeCell.handleExcelData(data)
             this.handlePaste(selectedCells, excelData)
         } else if (TableMergeCell.copyedCellsArray.length) {
+            console.log(2)
             if (!data) {
                 e.preventDefault()
                 this.handlePaste(selectedCells, TableMergeCell.copyedCellsArray)

@@ -286,12 +286,14 @@ export default class ColumnResizer {
         if (height > 30) {
             cells.forEach(cell => {
                 const i = cell.querySelector(`.${this.handshankCls}`)
-                i.style.height = `${height}px`
+                if (i) {
+                    i.style.height = `${height}px`
+                }
             })
         } else {
             cells.forEach(cell => {
                 const i = cell.querySelector(`.${this.handshankCls}`)
-                i.style.removeProperty('height')
+                i && i.style.removeProperty('height')
             })
         }
     }

@@ -7,12 +7,10 @@ import '@/assets/columnResizer/columnResizer.less'
 export const wangEditorTableExtend = {
     mounted() {
         this.$nextTick(() => {
+            this.textElem = this.$refs.editor.querySelector('.w-e-text[contenteditable="true"]')
             this.addInsertTableIconlistener()
-            
             window.addEventListener('keydown', this.tableObserve, true)
-            this.textElem = window.editor.$textElem.elems[0]
             this.textElem.addEventListener('paste', this.pasteTable, true)
-            // window.addEventListener('copy', this.copy, false)
             window.addEventListener('mousedown', this.mousedown, true)
         })
     },
@@ -27,13 +25,6 @@ export const wangEditorTableExtend = {
         }
     },
     methods: {
-        /*copy () {
-            const selectionStr = window.getSelection().toString()
-            console.log('window监听复制命令，如果复制了文本，则清空拷贝的单元格数据')
-            if (selectionStr) {
-                TableMergeCell.copyedCellsArray = []
-            }
-        },*/
         mousedown (e) {
             const {target} = e
             if (this.$refs.editor && !this.$refs.editor.contains(target)) {
@@ -163,8 +154,7 @@ export const wangEditorTableExtend = {
                 }
             }
             const observer = new MutationObserver(callback)
-            const ele = this.$refs.editor.querySelector('.w-e-text[contenteditable="true"]')
-            observer.observe(ele, {
+            observer.observe(this.textElem, {
                 childList: true,
                 subtree: true,
             })
@@ -191,7 +181,6 @@ export const wangEditorTableExtend = {
         }
         window.removeEventListener('keydown', this.tableObserve, true)
         this.textElem.removeEventListener('paste', this.pasteTable, true)
-        // window.removeEventListener('copy', this.copy, false)
         window.removeEventListener('mousedown', this.mousedown, true)
     },
 }
