@@ -12,6 +12,16 @@ export const wangEditorTableExtend = {
             window.addEventListener('keydown', this.tableObserve, true)
             this.textElem.addEventListener('paste', this.pasteTable, true)
             window.addEventListener('mousedown', this.mousedown, true)
+
+            window.editorInstance.config.onchange = (newHtml) => {
+                // 说明粘贴的内容即有表格，也有图片
+                if (newHtml.includes('<table') && newHtml.includes('</table>') && newHtml.includes('<img')) {
+                    const srcAttr = newHtml.match(/src=".+\.png"/)[0]
+                    console.log(srcAttr)
+                    const img = window.editorInstance.$textElem.elems[0].querySelector(`[${srcAttr}]`)
+                    img && img.remove()
+                }
+            }
         })
     },
     watch: {
@@ -46,8 +56,12 @@ export const wangEditorTableExtend = {
             
             const getImageItem = (clipboardData) => {
                 /*
-                 * 图片： types: ['text/html', 'image/png']
-                 * 表格： type: ['text/plain', 'text/html', 'text/rtf', 'Files']
+                 * 图片types: ['text/html', 'Files']
+                 * 图片DataTransferItem： {kind: 'file', type: 'image/png'}
+                 * 表格types： 
+                 * ppt: ['text/html', 'Files']
+                 * excel: ['text/plain', 'text/html', 'text/rtf', 'Files']
+                 * word: ['text/plain', 'text/html', 'text/rtf']
                 */
                 const {items, types} = clipboardData
                 let item = null
@@ -60,9 +74,15 @@ export const wangEditorTableExtend = {
                 }
                 return item
             }
-            const item = getImageItem(clipboardData)
-            const isPasteImg = item && item.kind === 'file' && item.type.match(/^image\//i) && !textHtml.includes('<table') && !textHtml.includes('</table>')
-            
+
+            const officeXmlns = 'xmlns="http://www.w3.org/TR/REC-html40'
+            const isExcel = textHtml && textHtml.includes(officeXmlns) && textHtml.includes('office:excel')
+            const isWord = textHtml && textHtml.includes(officeXmlns) && textHtml.includes('office:word')
+            const isPpt = textHtml && textHtml.includes(officeXmlns) && !textHtml.includes('office:excel') && !textHtml.includes('office:word')
+
+            const imageItem = getImageItem(clipboardData)
+            const isPasteImg = imageItem && imageItem.kind === 'file' && imageItem.type.match(/^image\//i) && !isExcel && !isWord && !isPpt
+            console.log(isPasteImg, imageItem)
             console.log('textElem listen pasteTable event', textPlain.length, textPlain === ' ', isPasteImg)
 
             if (textPlain === ' ') {
@@ -93,7 +113,9 @@ export const wangEditorTableExtend = {
                 p.insertAdjacentElement('afterend', table)
             } else if (isPasteImg) {
                 e.stopPropagation()
-                console.log(item)
+                console.log('paste image', imageItem)
+            } else if (isPpt) {
+                console.log('from ppt')
             }
         },
 
