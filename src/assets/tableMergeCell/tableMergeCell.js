@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {Modal} from 'ant-design-vue'
 import 'ant-design-vue/lib/modal/style/css'
-import {getIndexEnd, getCellSpanProperty} from '../fn'
+import {getIndexStart, getIndexEnd, getCellSpanProperty} from '../fn'
 
 const defaults = {
     btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
@@ -1129,7 +1129,7 @@ export default class TableMergeCell {
                 this.addClass(target)
                 // console.log(this.indexEnd)
                 this.handleIndexSerial()
-                console.log(this.indexStart, this.indexEnd)
+                
                 // const isInvalid = this.validateCellRange()
                 // if (isInvalid) return
                 const indexEnd = getIndexEnd(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
@@ -1137,6 +1137,12 @@ export default class TableMergeCell {
                     row: indexEnd.rowEnd,
                     col: indexEnd.colEnd,
                 }
+                const indexStart = getIndexStart(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
+                this.indexStart = {
+                    row: indexStart.rowStart,
+                    col: indexStart.colStart,
+                }
+                console.log(this.indexStart, this.indexEnd)
                 // this.updateIndexEnd()
                 // this.updateIndexStart()
                 // console.log(this.indexEnd)

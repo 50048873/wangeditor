@@ -66,18 +66,33 @@ export const getIndexEnd = (function fn (rows, rowStart, rowEnd, colStart, colEn
 
 export const getIndexStart = (function fn (rows, rowStart, rowEnd, colStart, colEnd) {
     for (let i = rowEnd; i >= rowStart; i--) {
-        const tr = rows[i]
-        const {children} = tr
+        const {children} = rows[i]
         for (let j = colEnd; j >= colStart; j--) {
             const cell = children[j]
-            // console.log(i, j, cell)
-            // const {rowspan, colspan} = getCellSpanProperty(cell)
+            console.log(i, j, cell)
+            // 列
+            /*if (colspan > 1) {
+                const _colEnd = j + (colspan - 1)
+                if (_colEnd > colEnd) {
+                    colEnd = _colEnd
+                    return fn(rows, rowStart, rowEnd, colStart, colEnd)
+                } 
+            }*/
+
+            // 行
             if (cell.style.display === 'none') {
                 if (i === 0) continue
-                let preTrCell = tr[i - 1].children[j]
+                let m = i - 1
+                let preTrCell = rows[m].children[j]
                 while (preTrCell && preTrCell.style.display === 'none') {
-                    preTrCell = preTrCell.previousElementSibling
+                    m--
+                    preTrCell = rows[m].children[j].previousElementSibling
                 }
+                console.log(preTrCell)
+                const {
+                    rowspan: preTrRowspan, 
+                } = getCellSpanProperty(preTrCell)
+
                 let preCell = cell.previousElementSibling
                 let k = j - 1
                 while (preCell && preCell.style.display === 'none') {
@@ -85,25 +100,19 @@ export const getIndexStart = (function fn (rows, rowStart, rowEnd, colStart, col
                     k--
                 }
                 if (preCell) {
-                    const {rowspan, colspan} = getCellSpanProperty(preCell)
+                    const {colspan} = getCellSpanProperty(preCell)
                     k = k + (colspan - 1)
-                    if (k >= j && rowspan > 1) {
-                        const _rowEnd = i + (rowspan - 1)
-                        if (_rowEnd > rowEnd) {
-                            rowEnd = _rowEnd
-                        }
+                } 
+                // console.log(k, m, rows[m], preTrCell, preTrRowspan)
+                if (k < j && preTrRowspan > 1) {
+                    if (m < rowStart) {
+                        rowStart = m
                     }
                 }
             }
-            if (colspan > 1) {
-                const _colEnd = j + (colspan - 1)
-                if (_colEnd > colEnd) {
-                    colEnd = _colEnd
-                    return fn(rows, rowStart, rowEnd, colStart, colEnd)
-                } 
-            }
         } 
     }
+
     return {
         rowStart,
         colStart,
