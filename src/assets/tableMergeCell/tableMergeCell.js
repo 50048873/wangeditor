@@ -933,7 +933,7 @@ export default class TableMergeCell {
             this.ready = true
             this.cellStart = target
             this.indexStart = this.getCellIndex(target)
-            console.log(this.indexStart)
+            // console.log(this.indexStart)
             this.removeClass()
             this.addClass(target)
         }
@@ -1106,6 +1106,19 @@ export default class TableMergeCell {
         return isInvalid
     }
 
+    handleIndexSerial () {
+        const {row: rowStart, col: colStart} = this.indexStart
+        const {row: rowEnd, col: colEnd} = this.indexEnd
+        if (rowStart > rowEnd) {
+            this.indexStart.row = rowEnd
+            this.indexEnd.row = rowStart
+        }
+        if (colStart > colEnd) {
+            this.indexStart.col = colEnd
+            this.indexEnd.col = colStart
+        }
+    }
+
     mouseup = (e) => {
         let {target, button} = e
         if (button === 0 && this.ready) {
@@ -1114,17 +1127,19 @@ export default class TableMergeCell {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
                 this.addClass(target)
-                const isInvalid = this.validateCellRange()
-                if (isInvalid) return
+                // console.log(this.indexEnd)
+                this.handleIndexSerial()
+                console.log(this.indexStart, this.indexEnd)
+                // const isInvalid = this.validateCellRange()
+                // if (isInvalid) return
                 const indexEnd = getIndexEnd(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
-                console.log(indexEnd)
                 this.indexEnd = {
                     row: indexEnd.rowEnd,
                     col: indexEnd.colEnd,
                 }
                 // this.updateIndexEnd()
                 // this.updateIndexStart()
-                console.log(this.indexEnd)
+                // console.log(this.indexEnd)
                 // this.highlightSelectedCells()
                 this.highlightRangeCells()
                 this.activeTable()
