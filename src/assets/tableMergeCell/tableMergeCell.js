@@ -144,7 +144,7 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.handleTableFromExcel()
-        // this.addCellLocation()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -196,7 +196,7 @@ export default class TableMergeCell {
     }
 
     // 添加调试坐标
-    /*addCellLocation () {
+    addCellLocation () {
         const {rows} = this
         rows.forEach((row, i) => {
             const cells = row.children
@@ -204,7 +204,7 @@ export default class TableMergeCell {
                 cell.textContent = i + '-' + j
             })
         })
-    }*/
+    }
 
     // 同步最大行数和最大列数
     syncMaxRowAndColCount () {
@@ -1142,9 +1142,9 @@ export default class TableMergeCell {
                     row: indexStart.rowStart,
                     col: indexStart.colStart,
                 }
-                console.log(this.indexStart, this.indexEnd)
                 // this.updateIndexEnd()
                 // this.updateIndexStart()
+                console.log(this.indexStart, this.indexEnd)
                 // console.log(this.indexEnd)
                 // this.highlightSelectedCells()
                 this.highlightRangeCells()
