@@ -157,9 +157,27 @@ export default class TableMergeCell {
         }
     }
 
+    // 删除从其它软件粘贴过来带的空格
     handleExcelTableSpace (cell) {
         const {innerHTML} = cell
         cell.innerHTML = innerHTML.replace(/(&nbsp;){3,}/g, '<br>')
+    }
+
+    // 获取每行单元格长度
+    getCellsLen (row) {
+        const cells = row.cells
+        const len = cells.length
+        let count = 0
+        for (let i = 0; i < len; i++) {
+            const cell = cells[i]
+            const colspan = cell.getAttribute('colspan')
+            if (colspan > 1) {
+                count = count + colspan * 1
+            } else {
+                count += 1
+            }
+        }
+        return count
     }
 
     // 补齐从excel复制粘贴过来的表格单元格
@@ -168,25 +186,47 @@ export default class TableMergeCell {
         if (colgroup.tagName === 'COLGROUP') {
             const rows = tbody.children
             const rowLen = rows.length
+            const cellsLen = this.getCellsLen(rows[0])
             for (let i = 0; i < rowLen; i++) {
                 const row = rows[i]
                 const cells = row.cells
-                const colLen = cells.length
-                for (let j = 0; j < colLen; j++) {
+                for (let j = 0; j < cellsLen; j++) {
                     const cell = cells[j]
                     this.handleExcelTableSpace(cell)
                     const rowspan = cell.getAttribute('rowspan')
                     const colspan = cell.getAttribute('colspan')
-                    if (rowspan >= 1) {
+                    if (rowspan > 1 && !colspan) {
                         for (let k = 1; k < rowspan; k++) {
                             const newCell = rows[i + k].insertCell(j)
                             newCell.style.display = 'none'
                         }
-                    }
-                    if (colspan >= 1) {
+                    } else if (!rowspan && colspan > 1) {
                         for (let k = 1; k < colspan; k++) {
                             const newCell = row.insertCell(j + k)
                             newCell.style.display = 'none'
+                        }
+                    } else if (rowspan > 1 && colspan > 1) {
+                        for (let l = 0; l < rowspan; l++) {
+                            /*if (l === 0) {
+                                for (let c = 1; c < colspan; c++) {
+                                    const newCell = rows[i + l].insertCell(j + 1)
+                                    newCell.style.display = 'none'
+                                }
+                            } else {
+                                for (let c = 0; c < colspan; c++) {
+                                    const newCell = rows[i + l].insertCell(j)
+                                    newCell.style.display = 'none'
+                                }
+                            }*/
+                            let c = 0, p = j
+                            if (l === 0) {
+                                c = 1
+                                p = j + 1
+                            }
+                            for (; c < colspan; c++) {
+                                const newCell = rows[i + l].insertCell(p)
+                                newCell.style.display = 'none'
+                            }
                         }
                     }
                 }
@@ -831,7 +871,7 @@ export default class TableMergeCell {
     }
 
     copyTable () {
-        console.log('复制表格，localStorage缓存表格数据，并执行document.execCommand(copy)命令')
+        // console.log('复制表格，localStorage缓存表格数据，并执行document.execCommand(copy)命令')
         const activeEle = document.querySelector('.tableMergeCell_active')
         if (activeEle) {
             activeEle.classList.remove('tableMergeCell_active')
@@ -860,7 +900,7 @@ export default class TableMergeCell {
         const firstTd = firstTr.firstElementChild
         const lastTd = lastTr.lastElementChild
         if (firstTd == this.cellStart && lastTd == this.cellEnd) {
-            console.log('select all')
+            // console.log('select all')
             this.copyTable()
         }
     }
@@ -1071,7 +1111,7 @@ export default class TableMergeCell {
         } else if (Array.isArray(copyedCellsArray)) {
             e.stopPropagation()
             e.preventDefault()
-            console.log('复制单元格并清空剪切版')
+            // console.log('复制单元格并清空剪切版')
             if (e.clipboardData) {
                 e.clipboardData.setData('text/plain', '')
             } else if (window.clipboardData) {
@@ -1175,13 +1215,11 @@ export default class TableMergeCell {
         const clipboardData = e.clipboardData || window.clipboardData
         const data = clipboardData.getData('text')
         if (clipboardData.items.length > 2) {
-            console.log(1)
             e.preventDefault()
             e.stopPropagation()
             const excelData = TableMergeCell.handleExcelData(data)
             this.handlePaste(selectedCells, excelData)
         } else if (TableMergeCell.copyedCellsArray.length) {
-            console.log(2)
             if (!data) {
                 e.preventDefault()
                 this.handlePaste(selectedCells, TableMergeCell.copyedCellsArray)

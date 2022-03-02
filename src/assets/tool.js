@@ -1,4 +1,3 @@
-/* eslint-disable */
 import TableMergeCell from '@/assets/tableMergeCell/tableMergeCell'
 import '@/assets/tableMergeCell/tableMergeCell.less'
 import ColumnResizer from '@/assets/columnResizer/columnResizer'
@@ -115,8 +114,15 @@ export const wangEditorTableExtend = {
                 if (!p || p.tagName !== 'P') return
                 p.insertAdjacentElement('afterend', table)
             } else if (isPasteImg) {
-                e.stopPropagation()
-                // console.log('paste image', imageItem)
+                console.log('paste image', imageItem)
+                const s = navigator.userAgent
+                const m = s.match(/Chrome\/(\d+)/)
+                if (m) {
+                    const version = m[1]
+                    if (version > 79) {
+                        e.stopPropagation()
+                    }
+                }
             } else if (isPpt) {
                 // console.log('from ppt')
                 this.isFromPpt = true
