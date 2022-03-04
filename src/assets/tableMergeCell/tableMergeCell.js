@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {Modal} from 'ant-design-vue'
 import 'ant-design-vue/lib/modal/style/css'
-import {getIndexStart, getIndexEnd, getCellSpanProperty} from '../fn'
+import {getIndexStart, getIndexEnd, getCellSpanProperty, isRect} from '../fn'
 
 const defaults = {
     btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
@@ -963,92 +963,6 @@ export default class TableMergeCell {
         }
     }
 
-    updateIndexEnd () {
-        const {rows} = this
-        let indexEnd_row = this.indexEnd.row
-        let indexEnd_col = this.indexEnd.col
-        let rowEnd = 0, colEnd = 0
-        for (let i = this.indexStart.row; i <= indexEnd_row; i++) {
-            const tr = rows[i]
-            const {children} = tr
-            let rowspanArray = [], colspanArray = []
-            for (let j = this.indexStart.col; j <= indexEnd_col; j++) {
-                const cell = children[j]
-                const {rowspan, colspan} = getCellSpanProperty(cell)
-                rowspanArray.push(rowspan)
-                colEnd = j
-                if (colspan > 1) {
-                    colEnd = j + (colspan - 1)
-                }
-                if (colEnd > indexEnd_col) {
-                    indexEnd_col = colEnd
-                }
-            } 
-            const maxRowspan = Math.max(...rowspanArray)
-            rowEnd = i + (maxRowspan - 1)
-            if (rowEnd > indexEnd_row) {
-                indexEnd_row = rowEnd
-            }
-            colspanArray.push(colEnd)
-            colEnd = Math.max(...colspanArray)
-        }
-        this.indexEnd = {
-            row: rowEnd,
-            col: colEnd,
-        }
-    }
-
-    updateIndexStart () {
-        const {rows} = this
-        let indexStart_row = this.indexStart.row
-        let indexStart_col = this.indexStart.col
-        let colspanArray = []
-        for (let i = this.indexEnd.row; i >= indexStart_row; i--) {
-            if (i < 0) break
-            const tr = rows[i]
-            const {children} = tr
-            let rowspanArray = []
-            for (let j = this.indexEnd.col; j >= indexStart_col; j--) {
-                const cell = children[j]
-                const preCell = cell.previousElementSibling
-                if (!preCell) continue
-                const preCellSpan = getCellSpanProperty(preCell)
-
-                const preTr = tr.previousElementSibling
-                if (!preTr) continue
-                const preLineCell = preTr.children[j]
-                const preLineCellSpan = getCellSpanProperty(preLineCell)
-
-                if (cell.style.display === 'none') {
-                    // 行
-                    if (indexStart_row !== 0) {
-                        if (i === indexStart_row && (preLineCellSpan.rowspan > 1 || preLineCell.style.display === 'none')) {
-                            // if (preCellSpan.colspan > 1 || preCell.style.display === 'none') continue
-                            rowspanArray.push(preLineCell) 
-                        }
-                    }
-                    // 列
-                    if (indexStart_col !== 0) {
-                        if (j === indexStart_col && (preCellSpan.colspan > 1 || preCell.style.display === 'none')) {
-                            // if (preLineCellSpan.rowspan > 1 || preLineCell.style.display === 'none') continue
-                            indexStart_col--
-                        }
-                    }
-                }
-            } 
-            if (rowspanArray.length) {
-                indexStart_row--
-            }
-            colspanArray.push(indexStart_col)
-        }
-        const colStart = Math.min(...colspanArray)
-        this.indexStart = {
-            row: indexStart_row,
-            col: colStart,
-        }
-        console.log(indexStart_row, colStart)
-    }
-
     highlightRangeCells () {
         // console.log(this.indexStart, this.indexEnd)
         const {rows} = this
@@ -1084,28 +998,6 @@ export default class TableMergeCell {
         }
     }
 
-    validateCellRange () {
-        // console.log(this.indexStart, this.indexEnd)
-        let isInvalid = false
-        if (this.indexStart.row > this.indexEnd.row) {
-            Modal && Modal.confirm({
-                title: '提示',
-                content: '选取的开始行不能小于结束行',
-                zIndex: 10009,
-            })
-            isInvalid = true
-        }
-        if (this.indexStart.col > this.indexEnd.col) {
-            Modal && Modal.confirm({
-                title: '提示',
-                content: '选取的开始列不能小于结束列',
-                zIndex: 10009,
-            })
-            isInvalid = true
-        }
-        return isInvalid
-    }
-
     handleIndexSerial () {
         const {row: rowStart, col: colStart} = this.indexStart
         const {row: rowEnd, col: colEnd} = this.indexEnd
@@ -1119,6 +1011,30 @@ export default class TableMergeCell {
         }
     }
 
+    updateIndex () {
+        const indexEnd = getIndexEnd(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
+        this.indexEnd = {
+            row: indexEnd.rowEnd,
+            col: indexEnd.colEnd,
+        }
+        const indexStart = getIndexStart(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
+        this.indexStart = {
+            row: indexStart.rowStart,
+            col: indexStart.colStart,
+        }
+    }
+
+    makeSelectedCellsToRect () {
+        this.handleIndexSerial()
+        this.updateIndex()
+        let selectedCells = this.getSelectedCells(true)
+        while (!isRect(selectedCells)) {
+            this.updateIndex()
+            selectedCells = this.getSelectedCells(true)
+        }
+        this.highlightRangeCells()
+    }
+
     mouseup = (e) => {
         let {target, button} = e
         if (button === 0 && this.ready) {
@@ -1127,27 +1043,9 @@ export default class TableMergeCell {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
                 this.addClass(target)
-                // console.log(this.indexEnd)
-                this.handleIndexSerial()
-                
-                // const isInvalid = this.validateCellRange()
-                // if (isInvalid) return
-                const indexEnd = getIndexEnd(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
-                this.indexEnd = {
-                    row: indexEnd.rowEnd,
-                    col: indexEnd.colEnd,
-                }
-                const indexStart = getIndexStart(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
-                this.indexStart = {
-                    row: indexStart.rowStart,
-                    col: indexStart.colStart,
-                }
-                // this.updateIndexEnd()
-                // this.updateIndexStart()
-                console.log(this.indexStart, this.indexEnd)
-                // console.log(this.indexEnd)
-                // this.highlightSelectedCells()
-                this.highlightRangeCells()
+                // console.log(this.indexStart, this.indexEnd)
+                this.makeSelectedCellsToRect()
+                // console.log(this.indexStart, this.indexEnd)
                 this.activeTable()
             }
             this.ready = false

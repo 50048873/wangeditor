@@ -76,7 +76,8 @@ export const getPreCellInfo = (cell, j) => {
     if (!cell.previousElementSibling) {
         return {
             preCell: cell,
-            preCellIndex: j,
+            preCellIndexRight: j,
+            preCellIndexLeft: j,
         }
     }
     let preCell = cell.previousElementSibling
@@ -85,13 +86,15 @@ export const getPreCellInfo = (cell, j) => {
         preCell = preCell.previousElementSibling
         k--
     }
+    const indexLeft = k
     if (preCell) {
         const {colspan} = getCellSpanProperty(preCell)
         k = k + (colspan - 1)
     } 
     return {
         preCell,
-        preCellIndex: k,
+        preCellIndexRight: k,
+        preCellIndexLeft: indexLeft,
     }
 }
 
@@ -116,21 +119,16 @@ export const getIndexStart = (rows, rowStart, rowEnd, colStart, colEnd) => {
                 // 2、左边与当前为一体
 
                 const {preTrCell, preTrIndex} = getPreTrCellInfo(rows, i, j)
-                const {preCell, preCellIndex} = getPreCellInfo(cell, j)
+                const {preCell, preCellIndexRight, preCellIndexLeft} = getPreCellInfo(cell, j)
                 const {rowspan: preTrRowspan} = getCellSpanProperty(preTrCell)
                 const {colspan} = getCellSpanProperty(preCell)
-                // console.log(preTrRowspan, colspan)
-                if (preTrRowspan > 1 && j > preCellIndex) { // 仅行合并
-                    const diff = i - preTrIndex
-                    const newRowStart = i - diff
-                    if (newRowStart < rowStart && newRowStart >= 0) {
-                        rowStart = newRowStart
+                if (preTrRowspan > 1 && j > preCellIndexRight) { // 仅行合并
+                    if (preTrIndex < rowStart && preTrIndex >= 0) {
+                        rowStart = preTrIndex
                     }
-                    // console.log(i, j, ':', preTrIndex, diff, rowStart)
-                } else if (colspan > 1 && j <= preCellIndex) { // 仅列合并
-                    const c = j - (colspan - 1)
-                    if (c < colStart) {
-                        colStart = c > 0 ? c : 0
+                } else if (colspan > 1 && j <= preCellIndexRight) { // 仅列合并
+                    if (preCellIndexLeft < colStart && preCellIndexLeft >= 0) {
+                        colStart = preCellIndexLeft
                     }
                 } /*else if () { // 行列合并
 
@@ -145,13 +143,29 @@ export const getIndexStart = (rows, rowStart, rowEnd, colStart, colEnd) => {
     }
 }
 
-export const isRect = (rows) => {
-    const trLen = rows.length
-    for (let i = 0; i <= trlen; i++) {
-        const {children} = rows[i]
-        for (let j = colEnd; j >= colStart; j--) {
-            const cell = children[j]
-            // console.log(i, j, cell)
-        } 
+export const isRect = (selectedRowArray) => {
+    const trLen = selectedRowArray.length
+    let res = []
+    for (let i = 0; i < trLen; i++) {
+        const row = selectedRowArray[i]
+        const count = getLenOneRowWithTableIsProcess(row)
+        res.push(count)
     }
+    const same = res.every(num => num === res[0])
+    return same
+}
+
+export const getLenOneRowWithTableIsProcess = (rowArray) => {
+    const len = rowArray.length
+    let count = 0
+    for (let i = 0; i < len; i++) {
+        const cell = rowArray[i]
+        const colspan = cell.getAttribute('colspan')
+        if (i === len - 1 && colspan > 1) {
+            count = count + colspan * 1
+        } else {
+            count += 1
+        }
+    }
+    return count
 }
