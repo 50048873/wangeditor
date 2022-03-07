@@ -142,7 +142,6 @@ export default class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        this.handleTableFromExcel()
         // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
@@ -154,83 +153,6 @@ export default class TableMergeCell {
         if (this.menuEle) {
             this.menuEle.removeEventListener('click', this.menuClick, false)
             this.menuEle.remove()
-        }
-    }
-
-    // 删除从其它软件粘贴过来带的空格
-    handleExcelTableSpace (cell) {
-        const {innerHTML} = cell
-        cell.innerHTML = innerHTML.replace(/(&nbsp;){3,}/g, '<br>')
-    }
-
-    // 获取每行单元格长度
-    getCellsLen (row) {
-        const cells = row.cells
-        const len = cells.length
-        let count = 0
-        for (let i = 0; i < len; i++) {
-            const cell = cells[i]
-            const colspan = cell.getAttribute('colspan')
-            if (colspan > 1) {
-                count = count + colspan * 1
-            } else {
-                count += 1
-            }
-        }
-        return count
-    }
-
-    // 补齐从excel复制粘贴过来的表格单元格
-    handleTableFromExcel () {
-        const [colgroup, tbody] = this.tableEle.children
-        if (colgroup.tagName === 'COLGROUP') {
-            const rows = tbody.children
-            const rowLen = rows.length
-            const cellsLen = this.getCellsLen(rows[0])
-            for (let i = 0; i < rowLen; i++) {
-                const row = rows[i]
-                const cells = row.cells
-                for (let j = 0; j < cellsLen; j++) {
-                    const cell = cells[j]
-                    this.handleExcelTableSpace(cell)
-                    const rowspan = cell.getAttribute('rowspan')
-                    const colspan = cell.getAttribute('colspan')
-                    if (rowspan > 1 && !colspan) {
-                        for (let k = 1; k < rowspan; k++) {
-                            const newCell = rows[i + k].insertCell(j)
-                            newCell.style.display = 'none'
-                        }
-                    } else if (!rowspan && colspan > 1) {
-                        for (let k = 1; k < colspan; k++) {
-                            const newCell = row.insertCell(j + k)
-                            newCell.style.display = 'none'
-                        }
-                    } else if (rowspan > 1 && colspan > 1) {
-                        for (let l = 0; l < rowspan; l++) {
-                            /*if (l === 0) {
-                                for (let c = 1; c < colspan; c++) {
-                                    const newCell = rows[i + l].insertCell(j + 1)
-                                    newCell.style.display = 'none'
-                                }
-                            } else {
-                                for (let c = 0; c < colspan; c++) {
-                                    const newCell = rows[i + l].insertCell(j)
-                                    newCell.style.display = 'none'
-                                }
-                            }*/
-                            let c = 0, p = j
-                            if (l === 0) {
-                                c = 1
-                                p = j + 1
-                            }
-                            for (; c < colspan; c++) {
-                                const newCell = rows[i + l].insertCell(p)
-                                newCell.style.display = 'none'
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 

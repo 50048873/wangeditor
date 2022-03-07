@@ -31,7 +31,7 @@
 /* eslint-disable */
 import FormulaPop from '@/components/FormulaPop'
 import E from 'wangeditor'
-import { wangEditorTableExtend } from '@/assets/tool'
+import { wangEditorTableExtend } from '@/assets/mixin'
 import { FormulaMenu } from '@/assets/wangEditorMenuExtention'
 export default {
     name: 'about',
@@ -50,7 +50,270 @@ export default {
     created () {
         setTimeout(() => {
             this.value = `
-                
+                <table class="tableMergeCell" cellpadding="0" style="width: 355px;">
+
+ <colgroup><col style="width: 108px;"><col style="width: 128px;"><col style="width: 119px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th></tr></thead><tbody><tr>
+  <td>1</td>
+  <td>3</td>
+  <td>3</td>
+ </tr>
+ <tr>
+  <td>5</td>
+  <td>4</td>
+  <td>y</td>
+ </tr></tbody></table><table class="tableMergeCell" cellpadding="0" style="width: 445px;">
+ <colgroup><col style="width: 85px;"><col style="width: 87px;"><col style="width: 90px;"><col style="width: 94px;"><col style="width: 89px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th></tr></thead><tbody><tr>
+  <td colspan="2">
+  <p>发</p>
+  </td>
+  <td style="display: none;"></td><td colspan="3">
+  <p>的梵蒂冈讽德诵功</p>
+  </td>
+ <td style="display: none;"></td><td style="display: none;"></td></tr>
+ <tr>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+  <td>
+  <p>多方式的</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+ </tr>
+ <tr>
+  <td>
+  
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+  <td>
+  <p>大法师</p>
+  </td>
+ </tr></tbody></table><table class="tableMergeCell" cellpadding="0" style="width: 726px;">
+ <colgroup><col style="width: 91px;"><col style="width: 91px;"><col style="width: 93px;"><col style="width: 84px;"><col style="width: 91px;"><col style="width: 91px;"><col style="width: 95px;"><col style="width: 90px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="5" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="6" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="7" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th></tr></thead><tbody><tr>
+  <td colspan="2" rowspan="2">
+  <p>wewe</p>
+  </td>
+  <td style="display: none;"></td><td rowspan="3">
+  <p>ewe</p>
+  </td>
+  <td colspan="2" rowspan="2">
+  <p>we</p>
+  </td>
+  <td style="display: none;"></td><td colspan="3">
+  <p>wewe</p>
+  </td>
+ <td style="display: none;"></td><td style="display: none;"></td></tr>
+ <tr>
+  <td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td><td>
+  <p>er</p>
+  </td>
+  <td>
+  <p>erer</p>
+  </td>
+  <td>
+  <p>ee</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td style="display: none;"></td><td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  <p>er</p>
+  </td>
+  <td>
+  <p>rr</p>
+  </td>
+  <td>
+  <p>eer</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  <p>er</p>
+  </td>
+  <td>
+  <p>ee</p>
+  </td>
+  <td>
+  <p>r</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  
+  </td>
+  <td>
+  <p>er</p>
+  </td>
+  <td>
+  <p>rr</p>
+  </td>
+  <td>
+  <p>rrr</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>er</p>
+  </td>
+  <td>
+  <p>ere</p>
+  </td>
+  <td>
+  <p>tt</p>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>erer</p>
+  
+  </td>
+  <td>
+  <p>erer</p>
+  </td>
+  <td>
+  <p>erer</p>
+  </td>
+  <td>
+  <p>erer</p>
+  </td>
+  <td>
+  <p>er</p>
+  </td>
+  <td>
+  <p>ttt</p>
+  </td>
+  <td>
+  <p>t</p>
+  </td>
+ </tr></tbody></table>
             `
         }, 1000)
 
