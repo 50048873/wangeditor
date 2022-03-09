@@ -1,7 +1,21 @@
 /* eslint-disable */
 import {Modal} from 'ant-design-vue'
 import 'ant-design-vue/lib/modal/style/css'
-import {getIndexStart, getIndexEnd, getCellSpanProperty, isRect} from '../fn'
+import {
+    getIndexStart, 
+    getIndexEnd, 
+    getCellSpanProperty, 
+    isRect,
+    loopTR,
+    loopBR,
+    loopBL,
+    loopTL,
+    getIndex,
+    getRowStart,
+    getColEnd,
+    getRowEnd,
+    getColStart,
+} from '../fn'
 
 const defaults = {
     btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
@@ -1011,7 +1025,7 @@ export default class TableMergeCell {
         }
     }
 
-    updateIndex () {
+    updateIndex_copy1 () {
         const indexEnd = getIndexEnd(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
         this.indexEnd = {
             row: indexEnd.rowEnd,
@@ -1024,13 +1038,59 @@ export default class TableMergeCell {
         }
     }
 
+    updateIndex_copy2 () {
+        const {rows} = this
+        const {row: rowStart, col: colStart} = this.indexStart
+        const {row: rowEnd, col: colEnd} = this.indexEnd
+        let arr = []
+        const indexTR = loopTR(rows, rowStart, rowEnd, colStart, colEnd)
+        const indexBR = loopBR(rows, rowStart, rowEnd, colStart, colEnd)
+        const indexBL = loopBL(rows, rowStart, rowEnd, colStart, colEnd)
+        const indexTL = loopTL(rows, rowStart, rowEnd, colStart, colEnd)
+        arr = [indexTR, indexBR, indexBL, indexTL]
+        // console.log(arr)
+        this.indexStart = {
+            row: getIndex(arr, 'rowStart', 'min'),
+            col: getIndex(arr, 'colStart', 'min'),
+        }
+        this.indexEnd = {
+            row: getIndex(arr, 'rowEnd', 'max'),
+            col: getIndex(arr, 'colEnd', 'max'),
+        }
+        // console.log(this.indexStart, this.indexEnd)
+    }
+
+    updateIndex () {
+        const {rows} = this
+        const {row: rowStart, col: colStart} = this.indexStart
+        const {row: rowEnd, col: colEnd} = this.indexEnd
+        this.indexStart = {
+            row: getRowStart(rows, rowStart, rowEnd, colStart, colEnd),
+            col: getColStart(rows, rowStart, rowEnd, colStart, colEnd),
+        }
+        this.indexEnd = {
+            row: getRowEnd(rows, rowStart, rowEnd, colStart, colEnd),
+            col: getColEnd(rows, rowStart, rowEnd, colStart, colEnd),
+        }
+        // console.log(this.indexStart, this.indexEnd)
+    }
+
     makeSelectedCellsToRect () {
         this.handleIndexSerial()
-        this.updateIndex()
-        let selectedCells = this.getSelectedCells(true)
-        while (!isRect(selectedCells)) {
+        let count = 1, maxLoop = 10
+        while (count <= maxLoop) {
+            const {row: _rowStart, col: _colStart} = this.indexStart
+            const {row: _rowEnd, col: _colEnd} = this.indexEnd
+            console.log('updateBefore', _rowStart, _colStart, _rowEnd, _colEnd)
             this.updateIndex()
-            selectedCells = this.getSelectedCells(true)
+            console.log('updated', count, this.indexStart, this.indexEnd)
+            if (this.indexStart.row === _rowStart && 
+                this.indexEnd.row === _rowEnd && 
+                this.indexStart.col === _colStart && 
+                this.indexEnd.col === _colEnd) {
+                count = maxLoop
+            }
+            count++
         }
         this.highlightRangeCells()
     }
