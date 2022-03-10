@@ -2,15 +2,7 @@
 import {Modal} from 'ant-design-vue'
 import 'ant-design-vue/lib/modal/style/css'
 import {
-    getIndexStart, 
-    getIndexEnd, 
     getCellSpanProperty, 
-    isRect,
-    loopTR,
-    loopBR,
-    loopBL,
-    loopTL,
-    getIndex,
     getRowStart,
     getColEnd,
     getRowEnd,
@@ -1025,54 +1017,14 @@ export default class TableMergeCell {
         }
     }
 
-    updateIndex_copy1 () {
-        const indexEnd = getIndexEnd(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
-        this.indexEnd = {
-            row: indexEnd.rowEnd,
-            col: indexEnd.colEnd,
-        }
-        const indexStart = getIndexStart(this.rows, this.indexStart.row, this.indexEnd.row, this.indexStart.col, this.indexEnd.col)
-        this.indexStart = {
-            row: indexStart.rowStart,
-            col: indexStart.colStart,
-        }
-    }
-
-    updateIndex_copy2 () {
-        const {rows} = this
-        const {row: rowStart, col: colStart} = this.indexStart
-        const {row: rowEnd, col: colEnd} = this.indexEnd
-        let arr = []
-        const indexTR = loopTR(rows, rowStart, rowEnd, colStart, colEnd)
-        const indexBR = loopBR(rows, rowStart, rowEnd, colStart, colEnd)
-        const indexBL = loopBL(rows, rowStart, rowEnd, colStart, colEnd)
-        const indexTL = loopTL(rows, rowStart, rowEnd, colStart, colEnd)
-        arr = [indexTR, indexBR, indexBL, indexTL]
-        // console.log(arr)
-        this.indexStart = {
-            row: getIndex(arr, 'rowStart', 'min'),
-            col: getIndex(arr, 'colStart', 'min'),
-        }
-        this.indexEnd = {
-            row: getIndex(arr, 'rowEnd', 'max'),
-            col: getIndex(arr, 'colEnd', 'max'),
-        }
-        // console.log(this.indexStart, this.indexEnd)
-    }
-
     updateIndex () {
-        const {rows} = this
-        const {row: rowStart, col: colStart} = this.indexStart
-        const {row: rowEnd, col: colEnd} = this.indexEnd
-        this.indexStart = {
-            row: getRowStart(rows, rowStart, rowEnd, colStart, colEnd),
-            col: getColStart(rows, rowStart, rowEnd, colStart, colEnd),
-        }
-        this.indexEnd = {
-            row: getRowEnd(rows, rowStart, rowEnd, colStart, colEnd),
-            col: getColEnd(rows, rowStart, rowEnd, colStart, colEnd),
-        }
-        // console.log(this.indexStart, this.indexEnd)
+        const {rows, indexStart, indexEnd} = this
+        // console.log(indexStart, indexEnd)
+        this.indexStart.row = getRowStart(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        this.indexStart.col = getColStart(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        this.indexEnd.row = getRowEnd(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        this.indexEnd.col = getColEnd(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        // console.log(indexStart, indexEnd)
     }
 
     makeSelectedCellsToRect () {
@@ -1081,9 +1033,9 @@ export default class TableMergeCell {
         while (count <= maxLoop) {
             const {row: _rowStart, col: _colStart} = this.indexStart
             const {row: _rowEnd, col: _colEnd} = this.indexEnd
-            console.log('updateBefore', _rowStart, _colStart, _rowEnd, _colEnd)
+            // console.log('updateBefore', _rowStart, _colStart, _rowEnd, _colEnd)
             this.updateIndex()
-            console.log('updated', count, this.indexStart, this.indexEnd)
+            // console.log(`update count: ${count}`, this.indexStart, this.indexEnd)
             if (this.indexStart.row === _rowStart && 
                 this.indexEnd.row === _rowEnd && 
                 this.indexStart.col === _colStart && 
@@ -1103,9 +1055,7 @@ export default class TableMergeCell {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
                 this.addClass(target)
-                // console.log(this.indexStart, this.indexEnd)
                 this.makeSelectedCellsToRect()
-                // console.log(this.indexStart, this.indexEnd)
                 this.activeTable()
             }
             this.ready = false
