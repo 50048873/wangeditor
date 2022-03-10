@@ -150,7 +150,7 @@ export default class TableMergeCell {
         }
         this.tableEle.classList.add(this.tableClassName)
         this.handleTableFromExcel()
-        this.addCellLocation()
+        // this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }

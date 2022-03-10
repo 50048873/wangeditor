@@ -115,21 +115,10 @@ export const getRowStart = (function fn (rows, rowStart, rowEnd, colStart, colEn
     for (let j = colStart; j <= colEnd; j++) {
         const cell = children[j]
         if (cell.style.display === 'none') {
-            // console.log(cell)
-            const {preTrCell, preTrIndex} = getPreTrCellInfo(rows, rowStart, j)
-            const {rowspan: preTrRowspan} = getCellSpanProperty(preTrCell)
-            if (isMultiLineAngColumn(rows, cell, rowStart, j)) {
-                const _rowStart = getCellIndexT(rows, cell, rowStart, j)
-                if (_rowStart < rowStart) {
-                    rowStart = _rowStart
-                    return fn(rows, rowStart, rowEnd, colStart, colEnd)
-                }
-            } else if (preTrRowspan > 1) { 
-                const _rowStart = preTrIndex + preTrRowspan - 1
-                if (_rowStart >= rowStart) {
-                    rowStart = preTrIndex
-                    return fn(rows, rowStart, rowEnd, colStart, colEnd)
-                }
+            const _rowStart = getCellIndexT(rows, cell, rowStart, j)
+            if (_rowStart < rowStart) {
+                rowStart = _rowStart
+                return fn(rows, rowStart, rowEnd, colStart, colEnd)
             }
         }
     } 
@@ -137,8 +126,7 @@ export const getRowStart = (function fn (rows, rowStart, rowEnd, colStart, colEn
 })
 
 export const getRowEnd = (function fn (rows, rowStart, rowEnd, colStart, colEnd) {
-    // console.log(rowStart, rowEnd, colStart, colEnd)
-    if (rowEnd === rows.length) return rowEnd
+    if (rowEnd === rows.length - 1) return rowEnd
     const {children} = rows[rowEnd]
     for (let j = colStart; j <= colEnd; j++) {
         const cell = children[j]
@@ -159,25 +147,6 @@ export const getRowEnd = (function fn (rows, rowStart, rowEnd, colStart, colEnd)
         }
     } 
     return rowEnd
-})
-
-export const getColStart_copy1 = (function fn (rows, rowStart, rowEnd, colStart, colEnd) {
-    if (colStart === 0) return colStart
-    for (let i = rowStart; i <= rowEnd; i++) {
-        const tr = rows[i]
-        const {children} = tr
-        const cell = children[colStart]
-        if (cell.style.display === 'none') {
-            const {preCell, preCellIndexRight, preCellIndexLeft} = getPreCellInfo(cell, colStart)
-            const {colspan: preColspan} = getCellSpanProperty(preCell)
-            if (preColspan > 1 && colStart <= preCellIndexRight) { 
-                const _colStart = colStart - (preColspan - 1)
-                colStart = _colStart
-                return fn(rows, rowStart, rowEnd, colStart, colEnd)
-            } 
-        } 
-    }
-    return colStart
 })
 
 export const getColStart = (function fn (rows, rowStart, rowEnd, colStart, colEnd) {
