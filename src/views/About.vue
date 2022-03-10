@@ -50,269 +50,100 @@ export default {
     created () {
         setTimeout(() => {
             this.value = `
-                <table class="tableMergeCell" cellpadding="0" style="width: 355px;">
+                <table class="tableMergeCell" cellpadding="0" style="width: 1700px;">
 
- <colgroup><col style="width: 108px;"><col style="width: 128px;"><col style="width: 119px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th></tr></thead><tbody><tr>
-  <td>1</td>
-  <td>3</td>
-  <td>3</td>
+ <colgroup><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 100px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="5" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="6" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="7" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="8" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="9" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="10" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="11" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="12" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="13" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="14" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="15" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="16" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th></tr></thead><tbody><tr>
+  <td rowspan="2">0-0</td>
+  <td rowspan="2">0-1</td>
+  <td rowspan="2">0-2</td>
+  <td rowspan="2">0-3</td>
+  <td rowspan="2">0-4</td>
+  <td rowspan="2">0-5</td>
+  <td rowspan="2">0-6</td>
+  <td rowspan="2">0-7</td>
+  <td rowspan="2">0-8</td>
+  <td rowspan="2">0-9</td>
+  <td colspan="2">0-10</td>
+  <td style="display: none;">0-11</td><td rowspan="2">0-12</td>
+  <td rowspan="2">0-13</td>
+  <td rowspan="2">0-14</td>
+  <td rowspan="2">0-15</td>
+  <td rowspan="2">0-16</td>
  </tr>
  <tr>
-  <td>5</td>
-  <td>4</td>
-  <td>y</td>
- </tr></tbody></table><table class="tableMergeCell" cellpadding="0" style="width: 445px;">
- <colgroup><col style="width: 85px;"><col style="width: 87px;"><col style="width: 90px;"><col style="width: 94px;"><col style="width: 89px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank" style=""></i></th></tr></thead><tbody><tr>
-  <td colspan="2">
-  <p>发</p>
-  </td>
-  <td style="display: none;"></td><td colspan="3">
-  <p>的梵蒂冈讽德诵功</p>
-  </td>
- <td style="display: none;"></td><td style="display: none;"></td></tr>
+  <td style="display: none;">1-0</td><td style="display: none;">1-1</td><td style="display: none;">1-2</td><td style="display: none;">1-3</td><td style="display: none;">1-4</td><td style="display: none;">1-5</td><td style="display: none;">1-6</td><td style="display: none;">1-7</td><td style="display: none;">1-8</td><td style="display: none;">1-9</td><td>1-10</td>
+  <td>1-11</td>
+ <td style="display: none;">1-12</td><td style="display: none;">1-13</td><td style="display: none;">1-14</td><td style="display: none;">1-15</td><td style="display: none;">1-16</td></tr>
  <tr>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
+  <td colspan="17">2-0</td>
+ <td style="display: none;">2-1</td><td style="display: none;">2-2</td><td style="display: none;">2-3</td><td style="display: none;">2-4</td><td style="display: none;">2-5</td><td style="display: none;">2-6</td><td style="display: none;">2-7</td><td style="display: none;">2-8</td><td style="display: none;">2-9</td><td style="display: none;">2-10</td><td style="display: none;">2-11</td><td style="display: none;">2-12</td><td style="display: none;">2-13</td><td style="display: none;">2-14</td><td style="display: none;">2-15</td><td style="display: none;">2-16</td></tr>
+ <tr>
+  <td>3-0</td>
+  <td rowspan="3">3-1</td>
+  <td rowspan="4">3-2</td>
+  <td rowspan="3">3-3</td>
+  <td>3-4</td>
+  <td>3-5</td>
+  <td>3-6</td>
+  <td>3-7</td>
+  <td>3-8</td>
+  <td>3-9</td>
+  <td>3-10</td>
+  <td>3-11</td>
+  <td>3-12</td>
+  <td>3-13</td>
+  <td>3-14</td>
+  <td>3-15</td>
+  <td>3-16</td>
  </tr>
  <tr>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
+  <td>4-0</td>
+  <td style="display: none;">4-1</td><td style="display: none;">4-2</td><td style="display: none;">4-3</td><td>4-4</td>
+  <td>4-5</td>
+  <td>4-6</td>
+  <td>4-7</td>
+  <td>4-8</td>
+  <td>4-9</td>
+  <td>4-10</td>
+  <td>4-11</td>
+  <td>4-12</td>
+  <td>4-13</td>
+  <td>4-14</td>
+  <td>4-15</td>
+  <td rowspan="2">4-16</td>
  </tr>
  <tr>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
-  <td>
-  <p>多方式的</p>
-  </td>
- </tr>
+  <td>5-0</td>
+  <td style="display: none;">5-1</td><td style="display: none;">5-2</td><td style="display: none;">5-3</td><td>5-4</td>
+  <td>5-5</td>
+  <td>5-6</td>
+  <td>5-7</td>
+  <td>5-8</td>
+  <td>5-9</td>
+  <td>5-10</td>
+  <td>5-11</td>
+  <td>5-12</td>
+  <td>5-13</td>
+  <td>5-14</td>
+  <td>5-15</td>
+ <td style="display: none;">5-16</td></tr>
  <tr>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
- </tr>
- <tr>
-  <td>
-  
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
-  <td>
-  <p>大法师</p>
-  </td>
- </tr></tbody></table><table class="tableMergeCell" cellpadding="0" style="width: 726px;">
- <colgroup><col style="width: 91px;"><col style="width: 91px;"><col style="width: 93px;"><col style="width: 84px;"><col style="width: 91px;"><col style="width: 91px;"><col style="width: 95px;"><col style="width: 90px;"></colgroup><thead><tr class="tableMergeCell-handshank-container"><th><i data-col="0" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="1" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="2" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="3" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="4" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="5" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="6" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th><th><i data-col="7" contenteditable="false" class="tableMergeCell-handshank" style="height: 60px;"></i></th></tr></thead><tbody><tr>
-  <td colspan="2" rowspan="2">
-  <p>wewe</p>
-  </td>
-  <td style="display: none;"></td><td rowspan="3">
-  <p>ewe</p>
-  </td>
-  <td colspan="2" rowspan="2">
-  <p>we</p>
-  </td>
-  <td style="display: none;"></td><td colspan="3">
-  <p>wewe</p>
-  </td>
- <td style="display: none;"></td><td style="display: none;"></td></tr>
- <tr>
-  <td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td><td>
-  <p>er</p>
-  </td>
-  <td>
-  <p>erer</p>
-  </td>
-  <td>
-  <p>ee</p>
-  </td>
- </tr>
- <tr>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td style="display: none;"></td><td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  <p>er</p>
-  </td>
-  <td>
-  <p>rr</p>
-  </td>
-  <td>
-  <p>eer</p>
-  </td>
- </tr>
- <tr>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  <p>er</p>
-  </td>
-  <td>
-  <p>ee</p>
-  </td>
-  <td>
-  <p>r</p>
-  </td>
- </tr>
- <tr>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  
-  </td>
-  <td>
-  <p>er</p>
-  </td>
-  <td>
-  <p>rr</p>
-  </td>
-  <td>
-  <p>rrr</p>
-  </td>
- </tr>
- <tr>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>er</p>
-  </td>
-  <td>
-  <p>ere</p>
-  </td>
-  <td>
-  <p>tt</p>
-  </td>
- </tr>
- <tr>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>erer</p>
-  
-  </td>
-  <td>
-  <p>erer</p>
-  </td>
-  <td>
-  <p>erer</p>
-  </td>
-  <td>
-  <p>erer</p>
-  </td>
-  <td>
-  <p>er</p>
-  </td>
-  <td>
-  <p>ttt</p>
-  </td>
-  <td>
-  <p>t</p>
-  </td>
+  <td>6-0</td>
+  <td>6-1</td>
+  <td style="display: none;">6-2</td><td>6-3</td>
+  <td>6-4</td>
+  <td>6-5</td>
+  <td>6-6</td>
+  <td>6-7</td>
+  <td>6-8</td>
+  <td>6-9</td>
+  <td>6-10</td>
+  <td>6-11</td>
+  <td>6-12</td>
+  <td>6-13</td>
+  <td>6-14</td>
+  <td>6-15</td>
+  <td>6-16</td>
  </tr></tbody></table>
             `
         }, 1000)

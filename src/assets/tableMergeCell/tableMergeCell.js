@@ -1,6 +1,13 @@
 /* eslint-disable */
 import {Modal} from 'ant-design-vue'
 import 'ant-design-vue/lib/modal/style/css'
+import {
+    getCellSpanProperty, 
+    getRowStart,
+    getColEnd,
+    getRowEnd,
+    getColStart,
+} from '../fn'
 
 const defaults = {
     btnDisabledColor: '#ddd',   // 右键菜单禁用时的颜色
@@ -142,7 +149,7 @@ export default class TableMergeCell {
             throw new Error('请传入table元素！')
         }
         this.tableEle.classList.add(this.tableClassName)
-        // this.addCellLocation()
+        this.addCellLocation()
         this.syncMaxRowAndColCount()
         this.addEvent()
     }
@@ -157,7 +164,7 @@ export default class TableMergeCell {
     }
 
     // 添加调试坐标
-    /*addCellLocation () {
+    addCellLocation () {
         const {rows} = this
         rows.forEach((row, i) => {
             const cells = row.children
@@ -165,7 +172,7 @@ export default class TableMergeCell {
                 cell.textContent = i + '-' + j
             })
         })
-    }*/
+    }
 
     // 同步最大行数和最大列数
     syncMaxRowAndColCount () {
@@ -927,32 +934,94 @@ export default class TableMergeCell {
     }
 
     mousemove = (e) => {
+        e.preventDefault()
         let {target} = e
         target = TableMergeCell.getTargetParentCell(target)
         if (this.ready && this.tableEle.contains(target)) {
             clearTimeout(this.timer)
             this.timer = setTimeout(() => {
-                const {rowspan, colspan} = this.getCellSpanProperty(target)
-                if (rowspan > 1 || colspan > 1) return
+                // const {rowspan, colspan} = this.getCellSpanProperty(target)
+                // if (rowspan > 1 || colspan > 1) return
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
-                this.removeClass()
-                this.highlightSelectedCells()
-                const selection = window.getSelection()
-                if (this.cellStart !== this.cellEnd) {
-                    selection.collapseToEnd()
-                }
+                // this.removeClass()
+                // this.highlightSelectedCells()
+                // const selection = window.getSelection()
+                // if (this.cellStart !== this.cellEnd) {
+                //     selection.collapseToEnd()
+                // }
             }, 1000 / 60)
         }
+    }
+
+    highlightRangeCells () {
+        // console.log(this.indexStart, this.indexEnd)
+        const {rows} = this
+        for (let i = this.indexStart.row; i <= this.indexEnd.row; i++) {
+            const tr = rows[i]
+            const {children} = tr
+            const childLen = children.length
+            for (let j = this.indexStart.col; j <= this.indexEnd.col; j++) {
+                const cell = children[j]
+                // console.log(i, j, cell)
+                this.addClass(cell)
+            }
+        }
+    }
+
+    handleIndexSerial () {
+        const {row: rowStart, col: colStart} = this.indexStart
+        const {row: rowEnd, col: colEnd} = this.indexEnd
+        if (rowStart > rowEnd) {
+            this.indexStart.row = rowEnd
+            this.indexEnd.row = rowStart
+        }
+        if (colStart > colEnd) {
+            this.indexStart.col = colEnd
+            this.indexEnd.col = colStart
+        }
+    }
+
+    updateIndex () {
+        const {rows, indexStart, indexEnd} = this
+        // console.log(indexStart, indexEnd)
+        this.indexStart.row = getRowStart(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        this.indexStart.col = getColStart(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        this.indexEnd.row = getRowEnd(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        this.indexEnd.col = getColEnd(rows, indexStart.row, indexEnd.row, indexStart.col, indexEnd.col)
+        // console.log(indexStart, indexEnd)
+    }
+
+    makeSelectedCellsToRect () {
+        if (this.indexEnd.row < 0 || this.indexEnd.col < 0) return
+        this.handleIndexSerial()
+        let count = 1, maxLoop = 10
+        while (count <= maxLoop) {
+            const {row: _rowStart, col: _colStart} = this.indexStart
+            const {row: _rowEnd, col: _colEnd} = this.indexEnd
+            // console.log('updateBefore', _rowStart, _colStart, _rowEnd, _colEnd)
+            this.updateIndex()
+            // console.log(`update count: ${count}`, this.indexStart, this.indexEnd)
+            if (this.indexStart.row === _rowStart && 
+                this.indexEnd.row === _rowEnd && 
+                this.indexStart.col === _colStart && 
+                this.indexEnd.col === _colEnd) {
+                count = maxLoop
+            }
+            count++
+        }
+        this.highlightRangeCells()
     }
 
     mouseup = (e) => {
         let {target, button} = e
         if (button === 0 && this.ready) {
             target = TableMergeCell.getTargetParentCell(target)
-            if (this.tableEle.contains(target)) {
+            if (this.tBody.contains(target)) {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
+                this.addClass(target)
+                this.makeSelectedCellsToRect()
                 this.activeTable()
             }
             this.ready = false

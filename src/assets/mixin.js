@@ -171,7 +171,7 @@ export const wangEditorTableExtend = {
             this.observer = new MutationObserver(callback)
             this.observer.observe(this.textElem, {
                 childList: true,
-                // subtree: true,
+                subtree: true,
             })
         },
     },
