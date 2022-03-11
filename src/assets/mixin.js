@@ -5,6 +5,7 @@ import ColumnResizer from '@/assets/columnResizer/columnResizer'
 import '@/assets/columnResizer/columnResizer.less'
 import {
     handleOfficeTable,
+    handleTh,
 } from '@/assets/tool'
 
 export const wangEditorTableExtend = {
@@ -158,6 +159,7 @@ export const wangEditorTableExtend = {
                     if (addedNode.nodeType === 1) {
                         if (addedNode.tagName === 'TABLE') {
                             handleOfficeTable(addedNode)
+                            handleTh(addedNode)
                             this.initTableInteraction()
                         } else if (addedNode.tagName === 'IMG') {
                             const table = res[res.length - 2]
@@ -169,9 +171,12 @@ export const wangEditorTableExtend = {
                 }
             }
             this.observer = new MutationObserver(callback)
+            const div = document.querySelector('.w-e-text[contenteditable="true"] > div')
             this.observer.observe(this.textElem, {
                 childList: true,
-                subtree: true,
+            })
+            this.observer.observe(div, {
+                childList: true,
             })
         },
     },

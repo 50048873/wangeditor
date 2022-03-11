@@ -263,19 +263,29 @@ export default class TableMergeCell {
         }
     }
 
-    // 高亮选取的单元格
-    highlightSelectedCells () {
+    getSelectedCells (isTwoDimensionalArray = false) {
+        const {indexStart, indexEnd} = this
+        let selectedCells = []
+        let selectedCellsTwoDimensionalArray = []
         const {rows} = this
-        const isValid = this.selectedCellsIsValid(rows)
-        if (!isValid) return
-        const selectedCells = this.getSelectedCells()
-        selectedCells.forEach(ele => {
-            this.addClass(ele)
-        })
+        for (let i = this.indexStart.row; i <= this.indexEnd.row; i++) {
+            const tr = rows[i]
+            const {children} = tr
+            let rowArray = []
+            for (let j = this.indexStart.col; j <= this.indexEnd.col; j++) {
+                const cell = children[j]
+                selectedCells.push(cell)
+                rowArray.push(cell)
+            }
+            if (rowArray.length) {
+                selectedCellsTwoDimensionalArray.push(rowArray)
+            }
+        }
+        return isTwoDimensionalArray ? selectedCellsTwoDimensionalArray : selectedCells
     }
 
     // 获取选取的单元格
-    getSelectedCells (isTwoDimensionalArray = false) {
+    getSelectedCells_copy1 (isTwoDimensionalArray = false) {
         const {indexStart, indexEnd} = this
         let selectedCells = []
         let selectedCellsTwoDimensionalArray = []
@@ -355,7 +365,7 @@ export default class TableMergeCell {
     unMergeCell = () => {
         let cellSpanProperty = null
         this.indexStart = this.getCellIndex(this.cellEnd)
-        cellSpanProperty = this.getCellSpanProperty(this.cellEnd)
+        cellSpanProperty = getCellSpanProperty(this.cellEnd)
         this.indexEnd = {
             row: cellSpanProperty.rowspan - 1 + this.indexStart.row,
             col: cellSpanProperty.colspan - 1 + this.indexStart.col,
@@ -379,58 +389,29 @@ export default class TableMergeCell {
             row: -1,
             col: -1,
         }
-        if (!this.cellStart) return index
-        const {tagName} = this.cellStart
-        const {rows} = this
-        if (tagName === 'TH') {
-            const firstTr = rows[0]
-            const {children} = firstTr
+        for (let i = 0; i < this.maxRowCount; i++) {
+            const tr = this.rows[i]
+            const {children} = tr
             const childLen = children.length
-            index.row = 0
             for (let j = 0; j < childLen; j++) {
                 const cell = children[j]
                 if (cell === ele) {
+                    index.row = i
                     index.col = j
                     break
                 }
             }
-        } else if (tagName === 'TD') {
-            for (let i = 0; i < this.maxRowCount; i++) {
-                const tr = rows[i]
-                const {children} = tr
-                const childLen = children.length
-                for (let j = 0; j < childLen; j++) {
-                    const cell = children[j]
-                    if (cell === ele) {
-                        index.row = i
-                        index.col = j
-                        break
-                    }
-                }
-                if (index.row > 0) {
-                    break
-                }
+            if (index.row > 0) {
+                break
             }
         }
         
         return index
     }
 
-    // 获取单元格rowspan, colspan属性值
-    getCellSpanProperty (cell) {
-        let rowspan = cell.getAttribute('rowspan')
-        let colspan = cell.getAttribute('colspan')
-        rowspan = rowspan ? rowspan * 1 : 1
-        colspan = colspan ? colspan * 1 : 1
-        return {
-            rowspan,
-            colspan,
-        }
-    }
-
     // 获取是否是合并过的单元格
     getIsMergedCellBool (cell) {
-        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const {rowspan, colspan} = getCellSpanProperty(cell)
         const maxCount = Math.max(rowspan, colspan)
         return maxCount > 1
     }
@@ -472,7 +453,7 @@ export default class TableMergeCell {
             this.btn_unMerge.style.color = btnDisabledColor
         } else {
             if (this.cellStart === this.cellEnd) {
-                if (this.cellEnd.getAttribute('rowspan') || this.cellEnd.getAttribute('colspan')) {
+                if (this.cellEnd && (this.cellEnd.getAttribute('rowspan') || this.cellEnd.getAttribute('colspan'))) {
                     this.btn_unMerge.style.removeProperty('color')
                 } else {
                     this.btn_merge.style.color = btnDisabledColor
@@ -496,7 +477,7 @@ export default class TableMergeCell {
         } else {
             this.btn_addRow.style.removeProperty('color')
         }
-        const {rowspan, colspan} = this.getCellSpanProperty(target)
+        const {rowspan, colspan} = getCellSpanProperty(target)
         if (rowspan > 1 || colspan > 1) {
             this.btn_delRow.style.color = btnDisabledColor
             this.btn_delCol.style.color = btnDisabledColor
@@ -521,6 +502,9 @@ export default class TableMergeCell {
             this.btn_delRow.style.removeProperty('color')
             this.btn_addCol.style.removeProperty('color')
             this.btn_delCol.style.removeProperty('color')
+
+            this.btn_addTh.style.removeProperty('color')
+            this.btn_delTh.style.removeProperty('color')
         } else {
             this.btn_addBackgroundColor.style.color = btnDisabledColor
             this.btn_delBackgroundColor.style.color = btnDisabledColor
@@ -532,6 +516,9 @@ export default class TableMergeCell {
             this.btn_delRow.style.color = btnDisabledColor
             this.btn_addCol.style.color = btnDisabledColor
             this.btn_delCol.style.color = btnDisabledColor
+
+            this.btn_addTh.style.color = btnDisabledColor
+            this.btn_delTh.style.color = btnDisabledColor
         }
     }
 
@@ -545,7 +532,7 @@ export default class TableMergeCell {
             const cellLen = cells.length
             for (let j = 0; j < cellLen; j++) {
                 const cell = cells[j]
-                const {colspan} = this.getCellSpanProperty(cell)
+                const {colspan} = getCellSpanProperty(cell)
                 if (colspan > 1 && index > j && index < j + colspan) {
                     cell.setAttribute('colspan', colspan - 1)
                 }
@@ -572,7 +559,7 @@ export default class TableMergeCell {
         const relatedCellsArray = this.getRelatedMergedRowCells(index, 'addRow')
         let colIndexArray = []
         relatedCellsArray.forEach(cell => {
-            const {rowspan, colspan} = this.getCellSpanProperty(cell)
+            const {rowspan, colspan} = getCellSpanProperty(cell)
             const {col} = this.getCellIndex(cell)
             colIndexArray.push(...this.getMergedColIndexArray(col, colspan))
             cell.setAttribute('rowspan', rowspan + 1)
@@ -594,7 +581,7 @@ export default class TableMergeCell {
         rows.forEach((row, rowIndex) => {
             const cells = row.children
             cells.forEach(cell => {
-                const {rowspan} = this.getCellSpanProperty(cell)
+                const {rowspan} = getCellSpanProperty(cell)
                 if (rowspan > 1 && this.rowIsInMergedRow(rowIndex, rowspan, index, type)) {
                     relatedCellsArray.push(cell)
                 }
@@ -622,14 +609,13 @@ export default class TableMergeCell {
         for (let i = 0; i < maxRowCount; i++) {
             const row = rows[i]
             const cell = row.children[index]
-            const newCell = cell.tagName === 'TH' ? '<th></th>' : '<td></td>'
-            cell.insertAdjacentHTML('beforebegin', newCell)
+            cell.insertAdjacentHTML('beforebegin', '<td></td>')
         }
 
         rows.forEach((row, rowIndex) => {
             const cells = row.children
             cells.forEach((cell, cellIndex) => {
-                const {rowspan, colspan} = this.getCellSpanProperty(cell)
+                const {rowspan, colspan} = getCellSpanProperty(cell)
                 if (colspan > 1 && index > cellIndex && index <= cellIndex + colspan - 1) {
                     cell.setAttribute('colspan', colspan + 1)
                     cells[index].style.display = 'none'
@@ -667,13 +653,13 @@ export default class TableMergeCell {
 
     // 删除非第一行
     delOtherRow (cell) {
-        const {rowspan} = this.getCellSpanProperty(cell)
+        const {rowspan} = getCellSpanProperty(cell)
         cell.setAttribute('rowspan', rowspan - 1)
     }
 
     // 删除第一行
     delFirstRow (rows, col, cell, index) {
-        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const {rowspan, colspan} = getCellSpanProperty(cell)
         const nextRow = rows[index + 1]
         const nextCell = nextRow.children[col]
         nextCell.setAttribute('rowspan', rowspan - 1)
@@ -688,7 +674,7 @@ export default class TableMergeCell {
         rows.forEach(row => {
             const cells = row.children
             cells.forEach((cell, cellIndex) => {
-                const {colspan} = this.getCellSpanProperty(cell)
+                const {colspan} = getCellSpanProperty(cell)
                 if (colspan > 1 && index >= cellIndex && index <= cellIndex + colspan - 1) {
                     relatedCellsArray.push(cell)
                 }
@@ -699,13 +685,13 @@ export default class TableMergeCell {
 
     // 删除非第一列
     delOtherCol (cell) {
-        const {colspan} = this.getCellSpanProperty(cell)
+        const {colspan} = getCellSpanProperty(cell)
         cell.setAttribute('colspan', colspan - 1)
     }
 
     // 删除第一列
     delFirstCol (cell) {
-        const {rowspan, colspan} = this.getCellSpanProperty(cell)
+        const {rowspan, colspan} = getCellSpanProperty(cell)
         const nextCell = cell.nextElementSibling
         nextCell.setAttribute('colspan', colspan - 1)
         nextCell.setAttribute('rowspan', rowspan)
@@ -733,45 +719,35 @@ export default class TableMergeCell {
         onDelCol && onDelCol(index)
     }
 
-    // 添加表头
+    // 设置表头
     addTh () {
-        const firstTr = this.rows[0]
-        const {children} = firstTr
-        let tr = document.createElement('tr')
-        if (children[0].tagName === 'TD') {
-            const len = children.length
-            for (let i = 0; i < len; i++) {
-                const cell = children[i]
-                if (this.getIsMergedCellBool(cell)) {
-                    Modal && Modal.confirm({
-                        title: '提示',
-                        content: '请先手动取消第一行合并的单元格！',
-                        zIndex: 10009,
-                    })
-                    break
-                }
-                const th = document.createElement('th')
-                th.innerHTML = cell.innerHTML
-                tr.appendChild(th)
-            }
-            if (tr.childElementCount === len) {
-                firstTr.innerHTML = tr.innerHTML
+        const {rows} = this
+        for (let i = this.indexStart.row; i <= this.indexEnd.row; i++) {
+            const tr = rows[i]
+            const {children} = tr
+            for (let j = this.indexStart.col; j <= this.indexEnd.col; j++) {
+                const cell = children[j]
+                cell.style.borderBottom = '2px solid #ccc'
+                cell.style.textAlign = 'center'
+                cell.style.backgroundColor = '#f1f1f1'
+                cell.style.fontWeight = 'bold'
             }
         }
     }
 
-    // 删除表头
+    // 取消表头
     delTh () {
-        const firstTr = this.rows[0]
-        const {children} = firstTr
-        let tr = document.createElement('tr')
-        if (children[0].tagName === 'TH') {
-            children.forEach(cell => {
-                const td = document.createElement('td')
-                td.innerHTML = cell.innerHTML
-                tr.appendChild(td)
-            })
-            firstTr.innerHTML = tr.innerHTML
+        const {rows} = this
+        for (let i = this.indexStart.row; i <= this.indexEnd.row; i++) {
+            const tr = rows[i]
+            const {children} = tr
+            for (let j = this.indexStart.col; j <= this.indexEnd.col; j++) {
+                const cell = children[j]
+                cell.style.removeProperty('border-bottom')
+                cell.style.removeProperty('text-align')
+                cell.style.removeProperty('background-color')
+                cell.style.removeProperty('font-weight')
+            }
         }
     }
 
@@ -940,12 +916,11 @@ export default class TableMergeCell {
         if (this.ready && this.tableEle.contains(target)) {
             clearTimeout(this.timer)
             this.timer = setTimeout(() => {
-                // const {rowspan, colspan} = this.getCellSpanProperty(target)
+                // const {rowspan, colspan} = getCellSpanProperty(target)
                 // if (rowspan > 1 || colspan > 1) return
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
                 // this.removeClass()
-                // this.highlightSelectedCells()
                 // const selection = window.getSelection()
                 // if (this.cellStart !== this.cellEnd) {
                 //     selection.collapseToEnd()
@@ -960,7 +935,6 @@ export default class TableMergeCell {
         for (let i = this.indexStart.row; i <= this.indexEnd.row; i++) {
             const tr = rows[i]
             const {children} = tr
-            const childLen = children.length
             for (let j = this.indexStart.col; j <= this.indexEnd.col; j++) {
                 const cell = children[j]
                 // console.log(i, j, cell)
@@ -1073,18 +1047,17 @@ export default class TableMergeCell {
         const diffX = clientWidth - clientX
         const diffY = clientHeight - clientY
         if (diffX < width) {
-            this.menuEle.style.right = '10px'
-            this.menuEle.style.removeProperty('left')
+            this.menuEle.style.marginLeft = `-${width}px`
         } else {
-            this.menuEle.style.left = `${clientX}px`
-            this.menuEle.style.removeProperty('right')
+            this.menuEle.style.marginLeft = 'auto'
         }
         if (diffY < height) {
-            this.menuEle.style.height = `${diffY - 10}px`
+            this.menuEle.style.marginTop = `-${height}px`
         } else {
-            this.menuEle.style.removeProperty('height')
+            this.menuEle.style.marginTop = 'auto'
         }
         this.menuEle.style.top = `${clientY}px`
+        this.menuEle.style.left = `${clientX}px`
         this.menuEle.style.display = 'block'
         this.contextmenuCell = TableMergeCell.getTargetParentCell(target)
         this.handleMenuBtnMergeStatus(target)
@@ -1141,8 +1114,8 @@ export default class TableMergeCell {
                         cellT.innerText = cellR
                         continue
                     }
-                    const {rowspan: rowspanT, colspan: colspanT} = this.getCellSpanProperty(cellT)
-                    const {rowspan: rowspanR, colspan: colspanR} = this.getCellSpanProperty(cellR)
+                    const {rowspan: rowspanT, colspan: colspanT} = getCellSpanProperty(cellT)
+                    const {rowspan: rowspanR, colspan: colspanR} = getCellSpanProperty(cellR)
                     if (rowspanT === rowspanR && colspanT === colspanR) {
                         cellT.outerHTML = cellR.outerHTML
                     } else {
@@ -1186,7 +1159,7 @@ export default class TableMergeCell {
                         cell.innerText = copyedOneItem
                         continue
                     }
-                    const {rowspan, colspan} = this.getCellSpanProperty(cell)
+                    const {rowspan, colspan} = getCellSpanProperty(cell)
                     if (rowspan <= 1 && colspan <= 1) {
                         cell.outerHTML = copyedOneItem.outerHTML
                     }
