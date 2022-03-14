@@ -1154,7 +1154,7 @@ export default class TableMergeCell {
     keydown = (e) => {
         const {key} = e
         if (key === 'Delete') {
-            const selectedCells = this.getSelectedCells()
+            const selectedCells = this.tableEle.querySelectorAll('.tableMergeCell-selected')
             selectedCells.forEach(cell => {
                 cell.innerHTML = ''
             })
