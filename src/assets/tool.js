@@ -165,10 +165,23 @@ export const handleTh = (table) => {
     const len = children.length
     let fragment = document.createDocumentFragment()
     for (let i = 0; i < len; i++) {
+        const cell = children[i]
+        if (cell.tagName === 'TD') {
+            fragment = null
+            break
+        }
         const td = document.createElement('td')
         fragment.appendChild(td)
     }
+    if (!fragment) return
     let newTr = document.createElement('tr')
     newTr.appendChild(fragment)
     tbody.replaceChild(newTr, firstTr)
+}
+
+export const removeTableActiveCls = () => {
+    const activeEle = document.querySelector('.tableMergeCell_active')
+    if (activeEle) {
+        activeEle.classList.remove('tableMergeCell_active')
+    }
 }

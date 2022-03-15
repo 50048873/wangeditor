@@ -125,8 +125,20 @@
             }
         }
     }
+    @keyframes borderFade {
+        from {
+            outline-color: transparent;
+        }
+        to {
+            outline-color: #409eff;
+        }
+    }
     &.tableMergeCell_active {
-        outline: 1px solid #4b89ff;
+        outline: 1px dashed #4b89ff;
+        animation-name: borderFade;
+        animation-duration: 0.8s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
     }
 }
 
