@@ -162,7 +162,9 @@ export const wangEditorTableExtend = {
                         } else if (addedNode.tagName === 'IMG') {
                             const table = res[res.length - 2]
                             if (table && table.tagName === 'TABLE') {
-                                addedNode.remove()
+                                const src = addedNode.getAttribute('src')
+                                const img = this.editor.$textElem.elems[0].querySelector(`[src="${src}"]`)
+                                img && img.remove()
                             }
                         }
                     }
