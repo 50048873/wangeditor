@@ -679,10 +679,14 @@ export default class TableMergeCell {
             const {children} = tr
             for (let j = this.indexStart.col; j <= this.indexEnd.col; j++) {
                 const cell = children[j]
-                cell.style.removeProperty('border-bottom')
-                cell.style.removeProperty('text-align')
-                cell.style.removeProperty('background-color')
-                cell.style.removeProperty('font-weight')
+                if (cell.tagName === 'TH') {
+                    cell.outerHTML = cell.outerHTML.replace(/^<th>/, '<td>').replace(/<\/th>$/, '</td>')
+                } else {
+                    cell.style.removeProperty('border-bottom')
+                    cell.style.removeProperty('text-align')
+                    cell.style.removeProperty('background-color')
+                    cell.style.removeProperty('font-weight')
+                }
             }
         }
     }

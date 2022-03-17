@@ -145,7 +145,7 @@ export const wangEditorTableExtend = {
                     if (addedNode.nodeType === 1) {
                         if (addedNode.tagName === 'TABLE') {
                             handleOfficeTable(addedNode)
-                            handleTh(addedNode)
+                            // handleTh(addedNode)
                             this.initTableInteraction()
                         } else if (addedNode.tagName === 'IMG') {
                             const table = res[res.length - 2]
