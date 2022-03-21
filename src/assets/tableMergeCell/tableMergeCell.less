@@ -125,8 +125,20 @@
             }
         }
     }
+    @keyframes borderFade {
+        from {
+            outline-color: transparent;
+        }
+        to {
+            outline-color: #409eff;
+        }
+    }
     &.tableMergeCell_active {
-        outline: 1px solid #4b89ff;
+        outline: 1px dashed #4b89ff;
+        animation-name: borderFade;
+        animation-duration: 0.8s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
     }
 }
 
@@ -138,7 +150,7 @@
     margin: 0;
     padding: 0;
     background-color: white;
-    overflow: auto;
+    // overflow: auto;
     box-sizing: border-box;
     min-width: 160px;
     li {
@@ -148,6 +160,12 @@
         cursor: pointer;
         &:hover {
             background-color: #eee;
+        }
+    }
+    @media screen and (max-height: 768px) {
+        li {
+            font-size: 13px;
+            line-height: 1.7;
         }
     }
 }

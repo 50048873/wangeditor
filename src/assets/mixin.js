@@ -5,6 +5,8 @@ import ColumnResizer from '@/assets/columnResizer/columnResizer'
 import '@/assets/columnResizer/columnResizer.less'
 import {
     handleOfficeTable,
+    handleTh,
+    removeTableActiveCls,
 } from '@/assets/tool'
 
 export const wangEditorTableExtend = {
@@ -12,7 +14,6 @@ export const wangEditorTableExtend = {
         this.$nextTick(() => {
             this.textElem = this.$refs.editor.querySelector('.w-e-text[contenteditable="true"]')
             this.textElem.addEventListener('paste', this.pasteTable, true)
-            window.addEventListener('mousedown', this.mousedown, true)
             this.tableObserve()
         })
     },
@@ -27,20 +28,6 @@ export const wangEditorTableExtend = {
         }
     },
     methods: {
-        mousedown (e) {
-            const {target} = e
-            if (this.$refs.editor && !this.$refs.editor.contains(target)) {
-                this.removeTableActiveCls()
-            }
-        },
-        removeTableActiveCls () {
-            const activeEles = document.querySelectorAll('.tableMergeCell_active')
-            if (activeEles) {
-                activeEles.forEach(ele => {
-                    ele.classList.remove('tableMergeCell_active')
-                })
-            }
-        },
         pasteTable (e) {
             const clipboardData = e.clipboardData || window.clipboardData
             const textPlain = clipboardData.getData('text')
@@ -92,7 +79,7 @@ export const wangEditorTableExtend = {
                 if (!selection.rangeCount) return false
                 const range = selection.getRangeAt(0)
                 range.insertNode(table)
-                this.removeTableActiveCls()
+                removeTableActiveCls()
                 selection.collapseToEnd()
 
                 const getParentP = (target) => {
@@ -158,6 +145,7 @@ export const wangEditorTableExtend = {
                     if (addedNode.nodeType === 1) {
                         if (addedNode.tagName === 'TABLE') {
                             handleOfficeTable(addedNode)
+                            // handleTh(addedNode)
                             this.initTableInteraction()
                         } else if (addedNode.tagName === 'IMG') {
                             const table = res[res.length - 2]
@@ -171,9 +159,12 @@ export const wangEditorTableExtend = {
                 }
             }
             this.observer = new MutationObserver(callback)
+            const div = document.querySelector('.w-e-text[contenteditable="true"] > div')
             this.observer.observe(this.textElem, {
                 childList: true,
-                // subtree: true,
+            })
+            this.observer.observe(div, {
+                childList: true,
             })
         },
     },
@@ -190,7 +181,6 @@ export const wangEditorTableExtend = {
         })
         this.tables = null
         this.textElem.removeEventListener('paste', this.pasteTable, true)
-        window.removeEventListener('mousedown', this.mousedown, true)
         this.observer && this.observer.disconnect()
     },
 }
