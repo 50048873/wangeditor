@@ -7,6 +7,7 @@ import {
     handleOfficeTable,
     handleTh,
     removeTableActiveCls,
+    getAddedTable,
 } from '@/assets/tool'
 
 export const wangEditorTableExtend = {
@@ -16,16 +17,6 @@ export const wangEditorTableExtend = {
             this.textElem.addEventListener('paste', this.pasteTable, true)
             this.tableObserve()
         })
-    },
-    watch: {
-        value(newVal) {
-            if (newVal) {
-                if (!/<table.*><\/table>/gs.test(newVal)) return
-                this.$nextTick(() => {
-                    this.initTableInteraction()
-                })
-            }
-        }
     },
     methods: {
         pasteTable (e) {
@@ -44,7 +35,6 @@ export const wangEditorTableExtend = {
                 */
                 const {items, types} = clipboardData
                 let item = null
-                // console.log(items, types)
                 for (let i = 0; i < types.length; i++) {
                     if (types[i] === 'Files') {
                         item = items[i]
@@ -62,9 +52,6 @@ export const wangEditorTableExtend = {
             const imageItem = getImageItem(clipboardData)
             const isPasteImg = imageItem && imageItem.kind === 'file' && imageItem.type.match(/^image\//i) && !isExcel && !isWord && !isPpt
             
-            // console.log(isPasteImg, imageItem)
-            // console.log('textElem listen pasteTable event', textPlain.length, textPlain === ' ', isPasteImg)
-
             if (textPlain === ' ') {
                 // console.log('粘贴整个表格')
                 e.stopPropagation()
@@ -138,22 +125,21 @@ export const wangEditorTableExtend = {
             let res = []
             const callback = (mutationsList) => {
                 for (const mutation of mutationsList) {
-                    const { target, addedNodes } = mutation
+                    const { addedNodes } = mutation
                     if (!addedNodes.length) continue
                     const [addedNode] = addedNodes
+                    const table = getAddedTable(mutation)
                     res.push(addedNode)
-                    if (addedNode.nodeType === 1) {
-                        if (addedNode.tagName === 'TABLE') {
-                            handleOfficeTable(addedNode)
-                            // handleTh(addedNode)
-                            this.initTableInteraction()
-                        } else if (addedNode.tagName === 'IMG') {
-                            const table = res[res.length - 2]
-                            if (table && table.tagName === 'TABLE') {
-                                const src = addedNode.getAttribute('src')
-                                const img = this.editor.$textElem.elems[0].querySelector(`[src="${src}"]`)
-                                img && img.remove()
-                            }
+                    if (table) {
+                        handleOfficeTable(table)
+                        handleTh(table)
+                        this.initTableInteraction()
+                    } else if (addedNode.tagName === 'IMG') {
+                        const table = res[res.length - 2]
+                        if (table && table.tagName === 'TABLE') {
+                            const src = addedNode.getAttribute('src')
+                            const img = this.editor.$textElem.elems[0].querySelector(`[src="${src}"]`)
+                            img && img.remove()
                         }
                     }
                 }
