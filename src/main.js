@@ -9,6 +9,9 @@ Vue.use(Modal)
 Vue.prototype.$confirm = Modal.confirm
 Vue.prototype.$info = Modal.info
 
+import '@/assets/tableMergeCell/tableMergeCell.less'
+import '@/assets/columnResizer/columnResizer.less'
+
 Vue.config.productionTip = false
 
 new Vue({

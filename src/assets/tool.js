@@ -413,10 +413,37 @@ export const getAddedTable = (mutation) => {
     let table = null
     for (let i = 0; i < addedNodes.length; i++) {
         const node = addedNodes[i]
+        const {className} = node
         if (node.tagName === 'TABLE') {
             table = node
+            break
+        } else if (className && className.includes('tableMergeCell-tempContainer')) {
+            table = node.firstChild
             break
         }
     }
     return table
+}
+
+// 获取mutation addedNode的img元素
+export const getAddedImg = (mutation) => {
+    const { addedNodes } = mutation
+    let src = null
+    for (let i = 0; i < addedNodes.length; i++) {
+        const node = addedNodes[i]
+        if (node.tagName === 'IMG') {
+            const prevTable = node.previousElementSibling
+            if (prevTable && prevTable.tagName === 'TABLE') {
+                src = node.getAttribute('src')
+                break
+            } else if (node.parentNode) {
+                const prevSib = node.parentNode.previousElementSibling
+                if (prevSib && prevSib.tagName === 'TABLE') {
+                    src = node.getAttribute('src')
+                    break
+                }
+            }
+        }
+    }
+    return src
 }

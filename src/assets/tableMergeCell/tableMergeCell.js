@@ -12,7 +12,6 @@ import {
     colorToRgb,
     getIndexDefaultValue,
     getTargetParentCell,
-    isTheadChild,
     handleExcelData,
 } from '../tool'
 
@@ -225,15 +224,13 @@ export default class TableMergeCell {
             for (let j = indexStart.col; j <= indexEnd.col; j++) {
                 const cell = children[j]
                 if (cell.style.display === 'none') {
-                    cell.style.display = 'table-cell'
-                } else {
-                    const {rowspan, colspan} = getCellSpanProperty(cell)
-                    if (rowspan > 1) {
-                        cell.removeAttribute('rowspan')
-                    } 
-                    if (colspan > 1) {
-                        cell.removeAttribute('colspan')
+                    cell.style.removeProperty('display')
+                    if (cell.getAttribute('style') === '') {
+                        cell.removeAttribute('style')
                     }
+                } else {
+                    cell.removeAttribute('rowspan')
+                    cell.removeAttribute('colspan') 
                 }
                 this.removeClass(cell)
             }
@@ -697,8 +694,11 @@ export default class TableMergeCell {
 
     mousedown = (e) => {
         let {target, button} = e
-        if ((this.imgMasklayer && this.imgMasklayer.contains(target)) || target.tagName === 'IMG') return
-        if (this.tableIsInTable(target) || isTheadChild(target) || button !== 0) return
+        if (button !== 0) return
+        if (target.tagName === 'IMG') return
+        if ((this.imgMasklayer && this.imgMasklayer.contains(target))) return
+        if (!this.tBody.contains(target)) return
+        if (this.tableIsInTable(target)) return
         target = getTargetParentCell(target)
         const {tagName} = target
         if (tagName === 'TD' || tagName === 'TH') {
@@ -739,18 +739,17 @@ export default class TableMergeCell {
     }
 
     mousemove = (e) => {
-        let {target} = e
+        let {target, button} = e
         target = getTargetParentCell(target)
-        if (this.ready && this.tableEle.contains(target)) {
-            clearTimeout(this.timer)
-            this.timer = setTimeout(() => {
+        if (button === 0 && this.ready && this.tBody.contains(target)) {
+            window.requestAnimationFrame(() => {
                 this.cellEnd = target
                 this.indexEnd = this.getCellIndex(target)
                 const selection = window.getSelection()
                 if (this.cellStart !== this.cellEnd) {
                     selection.collapseToEnd()
                 }
-            }, 1000 / 60)
+            })
         }
     }
 

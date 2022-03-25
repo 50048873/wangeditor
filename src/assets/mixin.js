@@ -1,19 +1,19 @@
 /* eslint-disable */
-import TableMergeCell from '@/assets/tableMergeCell/tableMergeCell'
-import '@/assets/tableMergeCell/tableMergeCell.less'
-import ColumnResizer from '@/assets/columnResizer/columnResizer'
-import '@/assets/columnResizer/columnResizer.less'
+import TableMergeCell from './tableMergeCell/tableMergeCell'
+import ColumnResizer from './columnResizer/columnResizer'
+
 import {
     handleOfficeTable,
     handleTh,
     removeTableActiveCls,
     getAddedTable,
-} from '@/assets/tool'
+    getAddedImg,
+} from './tool'
 
 export const wangEditorTableExtend = {
     mounted() {
         this.$nextTick(() => {
-            this.textElem = this.$refs.editor.querySelector('.w-e-text[contenteditable="true"]')
+            this.textElem = this.editor.$textElem.elems[0]
             this.textElem.addEventListener('paste', this.pasteTable, true)
             this.tableObserve()
         })
@@ -122,35 +122,27 @@ export const wangEditorTableExtend = {
             })
         },
         tableObserve() {
-            let res = []
             const callback = (mutationsList) => {
                 for (const mutation of mutationsList) {
                     const { addedNodes } = mutation
                     if (!addedNodes.length) continue
-                    const [addedNode] = addedNodes
                     const table = getAddedTable(mutation)
-                    res.push(addedNode)
+                    const imgSrc = getAddedImg(mutation)
                     if (table) {
                         handleOfficeTable(table)
                         handleTh(table)
                         this.initTableInteraction()
-                    } else if (addedNode.tagName === 'IMG') {
-                        const table = res[res.length - 2]
-                        if (table && table.tagName === 'TABLE') {
-                            const src = addedNode.getAttribute('src')
-                            const img = this.editor.$textElem.elems[0].querySelector(`[src="${src}"]`)
-                            img && img.remove()
-                        }
+                    } 
+                    if (imgSrc) {
+                        const img = this.textElem.querySelector(`[src="${imgSrc}"]`)
+                        img && img.remove()
                     }
                 }
             }
             this.observer = new MutationObserver(callback)
-            const div = document.querySelector('.w-e-text[contenteditable="true"] > div')
             this.observer.observe(this.textElem, {
                 childList: true,
-            })
-            this.observer.observe(div, {
-                childList: true,
+                subtree: true,
             })
         },
     },
