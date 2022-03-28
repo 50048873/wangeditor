@@ -4,9 +4,9 @@
             <div v-html="value"></div>
         </div>
 
-        <button type="button" id="btn1" @click="getHtml">获取html</button>
+        <!-- <button type="button" id="btn1" @click="getHtml">获取html</button>
         <button type="button" id="btn2" @click="setHtml">设置html</button>
-        <div ref="newHtml" class="newHtml"></div>
+        <div ref="newHtml" class="newHtml"></div> -->
 
         <formula-pop 
             :visible.sync="visible" 
@@ -156,9 +156,10 @@ export default {
 }
 
 .testTable {
-    position: absolute;
+    // position: absolute;
     right: 15px;
     width: 200px;
+    margin-top: 10px;
     th, td {
         border: 1px solid;
         padding: 5px 10px;
