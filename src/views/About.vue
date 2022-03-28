@@ -57,7 +57,7 @@ export default {
         // $(htmlStr).mathquill('editable').mathquill('latex')
 
         this.latexArray = [
-            {
+            /*{
                 latex: '\\frac{1}{2}'
             },
             {
@@ -65,10 +65,7 @@ export default {
             },
             {
                 latex: '\\frac{32}{123}+x_{aa4}'
-            },
-            /*{
-                latex: '<span class="mathquill-rendered-math" style="font-size:20px;"><span class="textarea"><textarea data-cke-editable="1" contenteditable="false"></textarea></span><span class="fraction non-leaf" mathquill-command-id="4"><span class="numerator" mathquill-block-id="5"><span mathquill-command-id="11">3</span><span mathquill-command-id="12">2</span></span><span class="denominator" mathquill-block-id="6"><span mathquill-command-id="8">1</span><span mathquill-command-id="9">2</span><span mathquill-command-id="10">3</span></span><span style="display:inline-block;width:0">&nbsp;</span></span><span mathquill-command-id="13" class="binary-operator">+</span><var mathquill-command-id="14">x</var><sub class="non-leaf" mathquill-command-id="16" mathquill-block-id="17"><var mathquill-command-id="19">a</var><var mathquill-command-id="20">a</var><span mathquill-command-id="21">4</span></sub></span><span>&nbsp;</span>​'
-            }*/
+            },*/
         ]
     },
     mounted() {
