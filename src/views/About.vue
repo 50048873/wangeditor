@@ -50,7 +50,7 @@ export default {
     created () {
         setTimeout(() => {
             this.value = `
-                <p data-we-empty-p="">这是一段<span contenteditable="false" class="mathquill-rendered-math"><span class="fraction non-leaf" mathquill-command-id="328"><span class="numerator" mathquill-block-id="330"><span mathquill-command-id="329">1</span></span><span class="denominator" mathquill-block-id="332"><span mathquill-command-id="331">3</span></span><span style="display:inline-block;width:0">&nbsp;</span></span></span>文字内容</p>
+                
             `
         }, 1000)
 
